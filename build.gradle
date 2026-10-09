@@ -1,0 +1,112 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+version = mod_version
+group = mod_group_id
+base { archivesName = "${mod_id}-${minecraft_version}" }
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+    withSourcesJar()
+}
+
+// The compatibility processor must be loaded before the game/Mixin layer.
+sourceSets { compat }
+sourceSets.compat.compileClasspath = sourceSets.main.compileClasspath
+def compatJar = tasks.register('compatJar', Jar) {
+    from sourceSets.compat.output
+    archiveClassifier = 'compat'
+    destinationDirectory = layout.buildDirectory.dir('compat')
+    manifest.attributes('FMLModType': 'LIBRARY', 'Automatic-Module-Name': 'org.bmp.kubethaum.compat')
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://maven.latvian.dev/releases'
+        content { includeGroup 'dev.latvian.mods' }
+    }
+    maven { url = 'https://cursemaven.com'; content { includeGroup 'curse.maven' } }
+}
+
+neoForge {
+    version = neo_version
+    runs {
+        client { client() }
+        server { server(); programArgument '--nogui' }
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = file('run-gametest')
+            systemProperty 'kubethaum.smokeTest', 'true'
+        }
+        configureEach { logLevel = org.slf4j.event.Level.INFO }
+    }
+    mods {
+        "${mod_id}" { sourceSet(sourceSets.main); sourceSet(sourceSets.test) }
+    }
+}
+
+dependencies {
+    jarJar files(compatJar)
+    runtimeOnly files(compatJar)
+    testImplementation files(compatJar)
+    // Optional offline development against an existing installation; never bundled in this jar.
+    if (providers.gradleProperty('localModsDir').isPresent()) {
+        implementation fileTree(providers.gradleProperty('localModsDir').get()) {
+            include 'kubejs-*.jar', 'rhino-*.jar', 'thaumaturge-*.jar'
+        }
+        runtimeOnly fileTree(providers.gradleProperty('localModsDir').get()) {
+            include 'curios-*.jar', 'lithostitched-*.jar', 'better-advanced-tooltips-*.jar'
+        }
+    } else {
+        implementation("dev.latvian.mods:kubejs-neoforge:${kubejs_version}") { transitive = false }
+        implementation "dev.latvian.mods:rhino:${rhino_version}"
+        implementation "curse.maven:thaumaturge-1628024:${thaumaturge_file_id}"
+        runtimeOnly 'curse.maven:curios-309927:8463519'
+        runtimeOnly 'curse.maven:lithostitched-936015:8944658'
+        runtimeOnly 'curse.maven:better-advanced-tooltips-1637623:8568911'
+    }
+}
+
+def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    def propertiesToExpand = [minecraft_version_range: minecraft_version_range,
+        neo_version_range: neo_version_range, mod_id: mod_id, mod_name: mod_name,
+        mod_license: mod_license, mod_version: mod_version, mod_authors: mod_authors,
+        mod_description: mod_description]
+    inputs.properties propertiesToExpand
+    expand propertiesToExpand
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
+neoForge.ideSyncTask generateModMetadata
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+tasks.register('verifyResearch', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'org.bmp.kubethaum.ResearchVerification'
+    enableAssertions = true
+}
+tasks.register('verifyCompatibility', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'org.bmp.kubethaum.CompatibilityVerification'
+    enableAssertions = true
+}
+tasks.named('check') { dependsOn 'verifyResearch', 'verifyCompatibility' }
+tasks.named('sourcesJar') { from sourceSets.compat.allSource }
+tasks.named('test') { enabled = false } // Checks use verifyResearch and the actual GameTest server.
+
+def prepareSmokeScripts = tasks.register('prepareSmokeScripts', Copy) {
+    from('examples/server_scripts')
+    from('src/test/scripts')
+    into('run-gametest/kubejs/server_scripts')
+}
+tasks.matching { it.name == 'prepareGameTestServerRun' }.configureEach {
+    dependsOn prepareSmokeScripts
+}
