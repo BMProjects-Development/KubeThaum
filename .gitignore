@@ -4,6 +4,7 @@ build
 run
 .kotlin
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 .gradle-home
 .gradle-user
 .codex-tmp

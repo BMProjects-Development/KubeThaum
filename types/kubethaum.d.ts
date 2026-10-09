@@ -1,4 +1,4 @@
-/** KubeThaum 0.1.2. Editor-only declarations; no runtime import is needed. */
+/** KubeThaum 1.0. Editor-only declarations; no runtime import is needed. */
 declare namespace KubeThaum {
   type Id = `${string}:${string}`
   type ItemOrTag = Id | `#${Id}`

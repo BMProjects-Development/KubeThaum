@@ -116,8 +116,14 @@ tasks.register('releaseZip', Zip) {
     from(tasks.named('jar')) { into 'mods' }
     from('examples') { into 'examples' }
     from('types') { into 'types' }
-    from('README.md', 'CHANGELOG.md')
+    from('README.md')
     from('docs') { into 'docs' }
+}
+
+// Stage only this version's deliverables, even when build/libs contains older builds.
+tasks.register('releaseArtifacts', Sync) {
+    from tasks.named('jar'), tasks.named('sourcesJar'), tasks.named('releaseZip')
+    into layout.buildDirectory.dir('release')
 }
 tasks.matching { it.name == 'prepareGameTestServerRun' }.configureEach {
     dependsOn prepareSmokeScripts
