@@ -58,6 +58,37 @@ public final class ResearchVerification {
         brokenScript.scriptFailed(new IllegalStateException("Test exception"));
         rejects(brokenScript::finish, "script failed");
         check(ThaumaturgeBinding.gate("pack:a", 0).get("stage").getAsInt() == 0, "gate supports native zero-based stages");
+        check(result.summary().equals(new ResearchEventJS.Summary(1, 1, 1, 0)), "summary counts unique records rather than method calls");
+        var copies = new ResearchEventJS(Map.of("pack:base", initial), categories);
+        copies.edit("pack:base").title("Before copy");
+        copies.copy("pack:base", "pack:copy").title("Copy").editStage(0, page -> page.obtain("minecraft:gold_ingot", 2));
+        copies.edit("pack:base").title("After copy");
+        var copied = copies.get("pack:copy");
+        check(copied.has("extra_datapack_field"), "copy preserves unknown datapack fields");
+        check(copied.get("name").getAsString().equals("Copy"), "copy can be edited independently");
+        check(!copies.get("pack:base").getAsJsonArray("stages").get(0).getAsJsonObject().has("obtain"), "copy has independent nested stages");
+        copies.copy("pack:copy", "pack:second");
+        copies.edit("pack:copy").clearStages().stage(page -> page.text("Replaced"));
+        check(copies.get("pack:second").getAsJsonArray("stages").get(0).getAsJsonObject().has("obtain"), "copy captures earlier script edits as a snapshot");
+        rejects(() -> copies.copy("pack:base", "pack:base"), "already exists");
+        rejects(() -> copies.copy("pack:missing", "pack:absent"), "Unknown research");
+        check(!copies.exists("pack:absent"), "failed copy does not reserve destination ID");
+        copies.editCategory("thaumaturge:basics").index(2);
+        check(copies.finish().summary().equals(new ResearchEventJS.Summary(2, 1, 0, 1)), "summary distinguishes category edits");
+        rejects(() -> research("pack:context").stage(page -> page.text("Test").obtain("minecraft:stone", -1)), "Research 'pack:context', stage[1], field 'obtain'");
+        rejects(() -> research("pack:context").editStage(0, page -> page.text("")), "Research 'pack:context', stage[0], field 'text'");
+        rejects(() -> research("pack:context").addendum(page -> page.recipe("minecraft:stone")), "field 'text'");
+        var invalidReference = new ResearchEventJS(Map.of(), categories);
+        invalidReference.create("pack:context").stage(page -> page.text("Test").requireResearch("pack:missing"));
+        rejects(invalidReference::finish, "Research 'pack:context', stage[0], field 'required_research'");
+        var invalidItem = new ResearchEventJS(Map.of(), categories);
+        invalidItem.create("pack:context").stage(page -> page.text("Test").obtain("minecraft:missing_item"));
+        var invalidItems = invalidItem.finish().entries();
+        rejects(() -> ResearchValidator.validateItems(invalidItems, id -> false), "Research 'pack:context', stage[0], field 'obtain[0].items': Unknown item 'minecraft:missing_item'");
+        var validTags = new ResearchEventJS(Map.of(), categories);
+        validTags.create("pack:tags").stage(page -> page.text("Test").obtain("#minecraft:planks"));
+        ResearchValidator.validateItems(validTags.finish().entries(), id -> { throw new AssertionError("Tags must use the native registry loader"); });
+        check(true, "tags are left for native resolution");
         System.out.println("KubeThaum: " + checks + " progression checks passed");
     }
     private static ResearchBuilder research(String id) { return new ResearchBuilder(id).stage(page -> page.text("Base text")); }

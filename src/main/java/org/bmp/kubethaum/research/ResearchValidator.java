@@ -8,6 +8,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import net.minecraft.resources.Identifier;
 
 /** Checks references the native codecs represent as IDs rather than resolved holders. */
 public final class ResearchValidator {
@@ -28,19 +30,23 @@ public final class ResearchValidator {
                 if (parent.stage() > stageCount) fail(id, "parent " + value + " exceeds its " + stageCount + " stages");
             }
             references(entries, entry, "siblings", id);
-            for (var value : stages) {
-                var stage = value.getAsJsonObject();
+            for (int index = 0; index < stages.size(); index++) {
+                var stage = stages.get(index).getAsJsonObject();
+                String context = "Research '" + id + "', stage[" + index + "]";
                 ResearchJson.text(stage.get("text").getAsString());
-                references(entries, stage, "required_research", id);
+                references(entries, stage, "required_research", context);
                 for (String field : new String[]{"knowledge", "required_knowledge"}) {
                     for (var reward : array(stage, field)) {
                         var json = reward.getAsJsonObject();
-                        known(categories, json.get("category").getAsString(), id + " " + field);
-                        ResearchJson.positive(json.get("amount").getAsInt(), "Knowledge amount");
+                        known(categories, json.get("category").getAsString(), context + ", field '" + field + ".category'");
+                        ResearchDiagnostics.at(context + ", field '" + field + ".amount'",
+                            () -> ResearchJson.positive(json.get("amount").getAsInt(), "Knowledge amount"));
                     }
                 }
             }
-            for (var page : array(entry, "addenda")) references(entries, page.getAsJsonObject(), "required_research", id);
+            var pages = array(entry, "addenda");
+            for (int index = 0; index < pages.size(); index++) references(entries, pages.get(index).getAsJsonObject(),
+                "required_research", "Research '" + id + "', addendum[" + index + "]");
         }
         for (String id : changedCategories) {
             var category = categories.get(id);
@@ -55,6 +61,42 @@ public final class ResearchValidator {
                 if (entry.getValue().get("category").getAsString().equals(id)) visit(entry.getKey(), entries, categories, done, new LinkedHashSet<>());
             }
         }
+    }
+
+    /** Static items are available now; tags and dynamic holders are resolved by native codecs. */
+    public static void validateItems(Map<String, JsonObject> entries, Predicate<Identifier> knownItem) {
+        entries.forEach((id, entry) -> {
+            String owner = "Research '" + id + "'";
+            var stages = array(entry, "stages");
+            for (int index = 0; index < stages.size(); index++) {
+                var stage = stages.get(index).getAsJsonObject();
+                String context = owner + ", stage[" + index + "]";
+                for (String field : new String[]{"obtain", "craft"}) {
+                    var requirements = array(stage, field);
+                    for (int r = 0; r < requirements.size(); r++) {
+                        var items = requirements.get(r).getAsJsonObject().get("items");
+                        String path = context + ", field '" + field + "[" + r + "].items'";
+                        if (items.isJsonArray()) {
+                            for (var item : items.getAsJsonArray()) item(item.getAsString(), path, knownItem);
+                        } else item(items.getAsString(), path, knownItem);
+                    }
+                }
+                if (stage.has("construct")) {
+                    for (var cell : array(stage.getAsJsonObject("construct"), "cells")) {
+                        if (!cell.getAsString().isEmpty()) item(cell.getAsString(), context + ", field 'construct.cells'", knownItem);
+                    }
+                }
+            }
+        });
+    }
+
+    private static void item(String item, String context, Predicate<Identifier> knownItem) {
+        if (item.startsWith("#")) return;
+        ResearchDiagnostics.at(context, () -> {
+            if (!knownItem.test(Identifier.parse(ResearchJson.id(item)))) {
+                throw new IllegalArgumentException("Unknown item '" + item + "'");
+            }
+        });
     }
 
     private static void visit(String id, Map<String, JsonObject> entries, Map<String, JsonObject> categories,
@@ -79,7 +121,7 @@ public final class ResearchValidator {
         return refs;
     }
     private static void references(Map<String, JsonObject> entries, JsonObject json, String field, String owner) {
-        for (var ref : array(json, field)) known(entries, ref.getAsString(), owner + " " + field);
+        for (var ref : array(json, field)) known(entries, ref.getAsString(), owner + ", field '" + field + "'");
     }
     private static void known(Map<String, JsonObject> entries, String id, String context) {
         ResearchJson.id(id);

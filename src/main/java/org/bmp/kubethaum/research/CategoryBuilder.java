@@ -7,26 +7,36 @@ import java.util.function.Function;
 public final class CategoryBuilder {
     private final JsonObject data;
     private final Function<String, JsonObject> categories;
+    private final String context;
 
     public CategoryBuilder(JsonObject data, Function<String, JsonObject> categories) {
+        this(data, categories, "<standalone>");
+    }
+    public CategoryBuilder(JsonObject data, Function<String, JsonObject> categories, String id) {
         this.data = data;
         this.categories = categories;
+        this.context = "Category '" + id + "'";
     }
     public CategoryBuilder style(String category) {
+        return field("style", () -> copyStyle(category));
+    }
+    private void copyStyle(String category) {
         var source = categories.apply(ResearchJson.id(category));
         for (String field : new String[]{"icon", "background", "overlay_background"}) {
             if (source.has(field)) data.add(field, source.get(field).deepCopy()); else data.remove(field);
         }
-        return this;
     }
-    public CategoryBuilder icon(String texture) { data.addProperty("icon", ResearchJson.id(texture)); return this; }
-    public CategoryBuilder background(String texture) { data.addProperty("background", ResearchJson.id(texture)); return this; }
-    public CategoryBuilder overlay(String texture) { data.addProperty("overlay_background", ResearchJson.id(texture)); return this; }
+    public CategoryBuilder icon(String texture) { return field("icon", () -> data.addProperty("icon", ResearchJson.id(texture))); }
+    public CategoryBuilder background(String texture) { return field("background", () -> data.addProperty("background", ResearchJson.id(texture))); }
+    public CategoryBuilder overlay(String texture) { return field("overlay_background", () -> data.addProperty("overlay_background", ResearchJson.id(texture))); }
     public CategoryBuilder noOverlay() { data.remove("overlay_background"); return this; }
-    public CategoryBuilder index(int index) { data.addProperty("index", ResearchJson.nonNegative(index, "Category index")); return this; }
-    public CategoryBuilder requireResearch(String id) { data.addProperty("required_research", ResearchJson.id(id)); return this; }
+    public CategoryBuilder index(int index) { return field("index", () -> data.addProperty("index", ResearchJson.nonNegative(index, "Category index"))); }
+    public CategoryBuilder requireResearch(String id) { return field("required_research", () -> data.addProperty("required_research", ResearchJson.id(id))); }
     public CategoryBuilder noRequiredResearch() { data.remove("required_research"); return this; }
-    public CategoryBuilder formula(String aspect, int amount) { ResearchJson.aspect(data, "formula", aspect, amount); return this; }
+    public CategoryBuilder formula(String aspect, int amount) { return field("formula", () -> ResearchJson.aspect(data, "formula", aspect, amount)); }
+    private CategoryBuilder field(String field, Runnable action) {
+        ResearchDiagnostics.at(context + ", field '" + field + "'", action); return this;
+    }
     @HideFromJS public JsonObject build() { return data.deepCopy(); }
     @HideFromJS public static JsonObject defaults() {
         var json = new JsonObject();

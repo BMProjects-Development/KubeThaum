@@ -19,6 +19,9 @@ public abstract class RegistryDataLoaderMixin {
         ResourceManager resources, List<HolderLookup.RegistryLookup<?>> context,
         List<RegistryDataLoader.RegistryData<?>> registries, Executor executor,
         Operation<CompletableFuture<RegistryAccess.Frozen>> original) {
-        return original.call(ResearchResources.apply(resources, registries), context, registries, executor);
+        var prepared = ResearchResources.apply(resources, registries);
+        return original.call(prepared, context, registries, executor).thenApply(access -> {
+            ResearchResources.logSummary(prepared); return access;
+        });
     }
 }

@@ -42,19 +42,27 @@ public final class ResearchEventJS implements KubeEvent {
         return builder;
     }
     public void edit(String id, Consumer<ResearchBuilder> callback) { callback.accept(edit(id)); }
+    /** Copies the current effective record, including earlier handlers' edits, without rewriting links. */
+    public ResearchBuilder copy(String sourceId, String newId) {
+        ResearchJson.id(newId);
+        if (exists(newId)) throw new IllegalArgumentException("Research '" + newId + "' already exists; copy() needs a new ID");
+        var builder = new ResearchBuilder(newId, get(sourceId));
+        entries.put(newId, builder);
+        return builder;
+    }
     public CategoryBuilder category(String id) {
         ResearchJson.id(id);
         if (originalCategories.containsKey(id) || categories.containsKey(id)) {
             throw new IllegalArgumentException("Category '" + id + "' already exists; use editCategory()");
         }
-        var builder = new CategoryBuilder(CategoryBuilder.defaults(), this::getCategory);
+        var builder = new CategoryBuilder(CategoryBuilder.defaults(), this::getCategory, id);
         categories.put(id, builder);
         return builder;
     }
     public CategoryBuilder editCategory(String id) {
         ResearchJson.id(id);
         return categories.computeIfAbsent(id, key -> new CategoryBuilder(
-            require(originalCategories, key, "category").deepCopy(), this::getCategory));
+            require(originalCategories, key, "category").deepCopy(), this::getCategory, key));
     }
     public JsonObject get(String id) {
         return entries.containsKey(id) ? entries.get(id).build() : require(originalEntries, ResearchJson.id(id), "research").deepCopy();
@@ -81,7 +89,12 @@ public final class ResearchEventJS implements KubeEvent {
         allEntries.putAll(modifiedEntries);
         allCategories.putAll(modifiedCategories);
         ResearchValidator.validate(allEntries, allCategories, modifiedEntries.keySet(), modifiedCategories.keySet());
-        return new Changes(Map.copyOf(modifiedEntries), Map.copyOf(modifiedCategories));
+        int changedResearch = (int)modifiedEntries.keySet().stream().filter(originalEntries::containsKey).count();
+        int changedTabs = (int)modifiedCategories.keySet().stream().filter(originalCategories::containsKey).count();
+        var summary = new Summary(modifiedEntries.size() - changedResearch, changedResearch,
+            modifiedCategories.size() - changedTabs, changedTabs);
+        return new Changes(Map.copyOf(modifiedEntries), Map.copyOf(modifiedCategories), summary);
     }
-    public record Changes(Map<String, JsonObject> entries, Map<String, JsonObject> categories) {}
+    public record Changes(Map<String, JsonObject> entries, Map<String, JsonObject> categories, Summary summary) {}
+    public record Summary(int addedResearch, int changedResearch, int addedCategories, int changedCategories) {}
 }

@@ -104,8 +104,20 @@ tasks.named('test') { enabled = false } // Checks use verifyResearch and the act
 
 def prepareSmokeScripts = tasks.register('prepareSmokeScripts', Copy) {
     from('examples/server_scripts')
+    from('examples/standalone') { include '**/server_scripts/*.js'; eachFile { path = name }; includeEmptyDirs = false }
     from('src/test/scripts')
     into('run-gametest/kubejs/server_scripts')
+}
+
+tasks.register('releaseZip', Zip) {
+    dependsOn tasks.named('jar')
+    archiveFileName = "KubeThaum-${mod_version}.zip"
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    from(tasks.named('jar')) { into 'mods' }
+    from('examples') { into 'examples' }
+    from('types') { into 'types' }
+    from('README.md', 'CHANGELOG.md')
+    from('docs') { into 'docs' }
 }
 tasks.matching { it.name == 'prepareGameTestServerRun' }.configureEach {
     dependsOn prepareSmokeScripts

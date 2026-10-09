@@ -21,6 +21,9 @@ public abstract class PendingTagsRegistryDataLoaderMixin {
         List<RegistryDataLoader.RegistryData<?>> registries, Executor executor,
         List<Registry.PendingTags<?>> pendingTags,
         Operation<CompletableFuture<RegistryAccess.Frozen>> original) {
-        return original.call(ResearchResources.apply(resources, registries), context, registries, executor, pendingTags);
+        var prepared = ResearchResources.apply(resources, registries);
+        return original.call(prepared, context, registries, executor, pendingTags).thenApply(access -> {
+            ResearchResources.logSummary(prepared); return access;
+        });
     }
 }

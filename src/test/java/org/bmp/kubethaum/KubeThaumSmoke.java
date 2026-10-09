@@ -19,6 +19,8 @@ import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import io.netty.buffer.Unpooled;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
@@ -53,6 +55,16 @@ public final class KubeThaumSmoke extends GameTestInstance {
         var advanced = entries.getValue(Identifier.parse("pack:advanced_metallurgy"));
         var edited = entries.getValue(Identifier.parse("thaumaturge:metallurgy"));
         if (basic == null || advanced == null || edited == null) { helper.fail("Scripted research missing"); return; }
+        var source = entries.getValue(Identifier.parse("pack:copy_source"));
+        var copy = entries.getValue(Identifier.parse("pack:copy_snapshot"));
+        var nativeCopy = entries.getValue(Identifier.parse("pack:native_copy"));
+        if (source == null || copy == null || nativeCopy == null
+            || !source.nameKey().equals("Edited after copy") || !copy.nameKey().equals("Independent copy")
+            || copy.stages().size() != 1 || !source.stages().getFirst().obtain().getFirst().matches(new ItemStack(Items.OAK_PLANKS))
+            || !copy.stages().getFirst().obtain().getFirst().matches(new ItemStack(Items.GOLD_INGOT))
+            || nativeCopy.stages().size() != edited.stages().size()) {
+            helper.fail("Research copy did not preserve independent stages/native data"); return;
+        }
         if (basic.stages().size() != 2 || basic.stages().get(0).obtain().size() != 2 || basic.addenda().size() != 1) {
             helper.fail("Stage/item/addendum builders did not reach native registry"); return;
         }
@@ -83,6 +95,23 @@ public final class KubeThaumSmoke extends GameTestInstance {
         knowledge.addResearch(gate.entry());
         knowledge.markComplete(gate.entry());
         if (!ResearchGate.passes(player, gate)) { helper.fail("Recipe still locked after research completion"); return; }
+        // Exercise the native save and client-sync codecs without depending on a connected GUI client.
+        var partialId = Identifier.parse("pack:advanced_metallurgy");
+        knowledge.addResearch(partialId);
+        knowledge.setResearchStage(partialId, 1);
+        var saved = PlayerKnowledge.CODEC.codec().encodeStart(ops, knowledge).getOrThrow();
+        var restored = PlayerKnowledge.CODEC.codec().parse(ops, saved).getOrThrow();
+        if (!restored.isResearchComplete(gate.entry()) || restored.researchStage(partialId) != 1) {
+            helper.fail("Native save codec lost completed or partial scripted progress"); return;
+        }
+        var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), registries);
+        try {
+            PlayerKnowledge.STREAM_CODEC.encode(buffer, restored);
+            var synced = PlayerKnowledge.STREAM_CODEC.decode(buffer);
+            if (!synced.isResearchComplete(gate.entry()) || synced.researchStage(partialId) != 1) {
+                helper.fail("Native network codec lost scripted progress"); return;
+            }
+        } finally { buffer.release(); }
         helper.succeed();
     }
     @Override public MapCodec<? extends GameTestInstance> codec() { return MapCodec.unit(this); }

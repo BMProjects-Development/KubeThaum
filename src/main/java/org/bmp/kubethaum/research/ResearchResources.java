@@ -20,22 +20,28 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import net.minecraft.resources.Identifier;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.RegistryDataLoader;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.bmp.kubethaum.ThaumaturgeEvents;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** An immutable resource overlay consumed by the native registry codecs and network sync. */
 public final class ResearchResources implements ResourceManager {
     public static final String ENTRY_DIR = "thaumaturge/research_entry";
     public static final String CATEGORY_DIR = "thaumaturge/research_category";
+    private static final Logger LOGGER = LoggerFactory.getLogger("KubeThaum");
     private final ResourceManager delegate;
     private final Map<Identifier, Resource> overlay;
+    private final ResearchEventJS.Summary summary;
 
-    private ResearchResources(ResourceManager delegate, Map<Identifier, Resource> overlay) {
+    private ResearchResources(ResourceManager delegate, Map<Identifier, Resource> overlay, ResearchEventJS.Summary summary) {
         this.delegate = delegate;
         this.overlay = Map.copyOf(overlay);
+        this.summary = summary;
     }
 
     public static ResourceManager apply(ResourceManager resources, List<RegistryDataLoader.RegistryData<?>> registries) {
@@ -48,11 +54,20 @@ public final class ResearchResources implements ResourceManager {
         var event = new ResearchEventJS(read(resources, ENTRY_DIR), read(resources, CATEGORY_DIR));
         ThaumaturgeEvents.RESEARCH.post(ScriptType.SERVER, event);
         var changes = event.finish();
+        ResearchValidator.validateItems(changes.entries(), BuiltInRegistries.ITEM::containsKey);
         var overlay = new LinkedHashMap<Identifier, Resource>();
         var source = holder.kjs$getScriptManager().internalDataPack;
         add(overlay, changes.entries(), ENTRY_DIR, source);
         add(overlay, changes.categories(), CATEGORY_DIR, source);
-        return new ResearchResources(resources, overlay);
+        return new ResearchResources(resources, overlay, changes.summary());
+    }
+
+    /** Called only after native registry loading succeeds, once for this resource overlay. */
+    public static void logSummary(ResourceManager resources) {
+        if (!(resources instanceof ResearchResources research)) return;
+        var summary = research.summary;
+        LOGGER.info("Research loaded: {} added, {} changed; categories: {} added, {} changed. Research script changes require reopening the world.",
+            summary.addedResearch(), summary.changedResearch(), summary.addedCategories(), summary.changedCategories());
     }
 
     private static Map<String, JsonObject> read(ResourceManager resources, String directory) {
