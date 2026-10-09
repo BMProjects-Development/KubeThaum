@@ -24,8 +24,8 @@ def compatJar = tasks.register('compatJar', Jar) {
 repositories {
     mavenCentral()
     maven {
-        url = 'https://maven.latvian.dev/releases'
-        content { includeGroup 'dev.latvian.mods' }
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
     }
     maven { url = 'https://cursemaven.com'; content { includeGroup 'curse.maven' } }
 }
@@ -60,8 +60,9 @@ dependencies {
             include 'curios-*.jar', 'lithostitched-*.jar', 'better-advanced-tooltips-*.jar'
         }
     } else {
-        implementation("dev.latvian.mods:kubejs-neoforge:${kubejs_version}") { transitive = false }
-        implementation "dev.latvian.mods:rhino:${rhino_version}"
+        // Official release files, pinned by Modrinth version IDs.
+        implementation("maven.modrinth:kubejs:${kubejs_modrinth_version}") { transitive = false }
+        implementation("maven.modrinth:rhino:${rhino_modrinth_version}") { transitive = false }
         implementation "curse.maven:thaumaturge-1628024:${thaumaturge_file_id}"
         runtimeOnly 'curse.maven:curios-309927:8463519'
         runtimeOnly 'curse.maven:lithostitched-936015:8944658'

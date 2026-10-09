@@ -1,426 +1,640 @@
-# KubeThaum 1.0 Guide
+# KubeThaum: creating your own research
 
 [Русский](guide-ru.md) · [Home](../README.md)
 
-KubeThaum integrates KubeJS with Thaumaturge's native research system.
-Use JavaScript to create, edit, replace and copy research entries, configure
-Thaumonomicon tabs and gate supported recipes behind research progress.
-The addon does not add items, models or textures of its own.
+KubeThaum lets you write Thaumaturge research in JavaScript with KubeJS:
+add Thaumonomicon entries, create tabs, change existing stages, and unlock
+recipes as players progress through your research.
 
-- [Installation and compatibility](#installation-and-compatibility)
-- [Quick start](#quick-start)
-- [API](#api)
-- [Standalone examples](#standalone-examples)
-- [Editor autocomplete](#editor-autocomplete)
-- [Building and testing](#building-and-testing)
-- [Automatic builds and releases](#automatic-builds-and-releases)
-- [Checks before publishing](#checks-before-publishing)
+Start with a small research entry, then use the examples below to build your
+own progression tree. A complete tab with translations and a gated recipe
+is available in [the Workshop example](#the-complete-workshop).
 
-## Installation and compatibility
+- [Where scripts go](#where-scripts-go)
+- [Your first research](#your-first-research)
+- [Stage requirements and rewards](#stage-requirements-and-rewards)
+- [Research chains](#research-chains)
+- [Your own tab](#your-own-tab)
+- [Names and translations](#names-and-translations)
+- [Unlocking a recipe through research](#unlocking-a-recipe-through-research)
+- [Editing existing research](#editing-existing-research)
+- [Copying and replacing research](#copying-and-replacing-research)
+- [Additional pages and appearance](#additional-pages-and-appearance)
+- [The complete Workshop](#the-complete-workshop)
+- [Quick reference](#quick-reference)
+- [When something does not appear](#when-something-does-not-appear)
 
-| Component | Tested version / requirement |
-| --- | --- |
-| Minecraft | 26.1.2 |
-| Java | 25 |
-| NeoForge | 26.1.2.109 or newer, before 26.2; tested on 109 and 115 |
-| KubeJS | 26.1.2-8.0.6; this exact version is required by the metadata |
-| Rhino | 2101.2.8-build.91 |
-| Thaumaturge | 1.0.2; metadata permits `[1.0.2,1.1)` |
-| Curios / Lithostitched | Thaumaturge dependencies; development uses 15.0.0+26.1.2 / 1.8.0 |
+## Where scripts go
 
-Install matching versions of KubeThaum and its required dependencies on both
-the client and server. Better Advanced Tooltips is an optional KubeJS integration
-included in the development environment, but it is not required by KubeThaum's API.
-Dependencies retain their own licenses; KubeThaum's license is recorded in its JAR metadata.
+Install KubeThaum alongside Thaumaturge, KubeJS, Rhino, and Thaumaturge's
+dependencies. Version 1.0 targets Minecraft 26.1.2, NeoForge 26.1.2.109 and
+later within 26.1.2, KubeJS 26.1.2-8.0.6, and Thaumaturge 1.0.2.
+KubeThaum does not add research until you install scripts.
 
-Download `kubethaum-26.1.2-1.0.jar` from
-[GitHub Releases](https://github.com/BMProjects-Development/KubeThaum/releases)
-and place it in `mods`. Replace any previous KubeThaum JAR rather than keeping
-multiple addon versions installed. The `-sources.jar` file is for developers;
-do not install it in `mods`. The ZIP includes the game JAR, guides, examples
-and editor declarations. Scripts must be installed separately: the addon does
-not create pack-specific content on its own.
-
-NeoForge is allowed by the range `[26.1.2.109,26.2)`. Future API changes within
-that range still require validation. Released KubeJS 8.0.6 targets an old
-`RegistryDataLoader.load` signature, causing its WorldLoaderMixin to fail on
-NeoForge 114/115. KubeThaum includes a small compatibility library using
-NeoForge's official ClassProcessor API: it updates that exact injection descriptor
-in memory only when the loader exposes the newer `pendingTags` argument.
-On the older API, or for an already fixed descriptor, no patch is applied.
-KubeJS files on disk do not need to be replaced or edited.
-
-The addon also selects the appropriate registry hook and forwards `pendingTags`
-unchanged. Implementation:
-[KubeJSWorldLoaderProcessor.java](https://github.com/BMProjects-Development/KubeThaum/blob/main/src/compat/java/org/bmp/kubethaum/compat/KubeJSWorldLoaderProcessor.java).
-API reference:
-[NeoForge ClassProcessor](https://github.com/neoforged/FancyModLoader/blob/main/loader/src/main/java/net/neoforged/neoforgespi/transformation/ClassProcessor.java).
-
-## Quick start
-
-1. Install the addon and its dependencies on the client and server.
-2. Copy [research.js](../examples/server_scripts/research.js) into
-   `kubejs/server_scripts/` and [research_lang.js](../examples/client_scripts/research_lang.js)
-   into `kubejs/client_scripts/` on the client.
-3. Restart the server or reopen the world. After changing client translations,
-   reload client resources or restart the client.
-4. Open the Thaumonomicon: the Metallurgy tab will contain two research entries.
+Open your Minecraft instance folder. You need two KubeJS directories:
 
 ```text
-mods/kubethaum-26.1.2-1.0.jar
-kubejs/server_scripts/research.js
-kubejs/client_scripts/research_lang.js
-kubejs/types/kubethaum.d.ts       # editor only
-kubejs/types/globals.d.ts         # editor only
-kubejs/jsconfig.json             # optional
+kubejs/
+├── server_scripts/
+│   └── my_research.js       ← research, tabs, and recipes
+└── client_scripts/
+    └── my_research_lang.js  ← Thaumonomicon translations
 ```
 
-Research and recipes belong in `server_scripts`; translations belong in
-`client_scripts`. For a dedicated server, distribute client translations to
-players. Server research entries are sent to clients through Thaumaturge's
-native registry synchronization.
+Create any missing folders and plain text files with the `.js` extension.
+You can choose your own filenames. Make sure your editor does not save
+`my_research.js.txt`. No imports are needed at the top of a script.
 
-`/reload` updates recipes but **does not reload research registries**.
-After changing `ThaumaturgeEvents.research`, reopen the world or restart the server.
-Player progress is associated with research IDs. Reordering or removing stages
-of an existing research entry changes the meaning of saved stage indices.
+Use `ThaumaturgeEvents.research` for research, `ServerEvents.recipes` for
+recipes, and `ClientEvents.lang` for translations. The first two belong
+in `server_scripts`; the third belongs in `client_scripts`.
+For multiplayer, install research and recipe scripts on the server and
+include translation scripts in each player's client pack.
 
-Minimal server script:
+**Close and reopen the world after changing research**, or restart your
+dedicated server. `/reload` updates recipes but does not reload research.
+After changing translations, reload client resources with F3+T; restart
+the client when adding a new client script.
+
+## Your first research
+
+Create `kubejs/server_scripts/my_research.js` and paste the **entire** example:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.create('pack:metals')
+  event.create('pack:first_steps')
     .category('thaumaturge:alchemy')
-    .title('Studying metals')
+    .title('First Experiments')
     .icon('minecraft:iron_ingot')
-    .position(4, 2)
+    .position(8, 0)
     .stage(stage => {
-      stage.text('Gather eight iron ingots.')
-      stage.obtain('minecraft:iron_ingot', 8)
+      stage.text('Bring four iron ingots for your first experiments.')
+      stage.obtain('minecraft:iron_ingot', 4)
     })
-    .stage(stage => stage.text('You have studied the properties of iron.'))
+    .stage(stage => {
+      stage.text('You now know where to begin studying metals.')
+    })
 })
 ```
 
-Titles and page text accept literal strings or translation keys. Tab titles use
-`research_category.<namespace>.<path>`, for example `research_category.pack.metallurgy`.
-Define that key using the client's `ClientEvents.lang` event.
+Reopen the world and find First Experiments in the Alchemy tab.
+The entry has an iron ingot icon and two stages: handing in iron and a
+concluding page. Coordinates `(8, 0)` are an example; if the entry overlaps
+another one, move it with `position`.
 
-After successful registry loading, `logs/latest.log` contains a summary:
+| Line | What it controls |
+| --- | --- |
+| `create('pack:first_steps')` | The unique research ID |
+| `category('thaumaturge:alchemy')` | The Thaumonomicon tab |
+| `title('First Experiments')` | The entry's name |
+| `icon('minecraft:iron_ingot')` | An icon using an existing item |
+| `position(8, 0)` | Column and row on the research grid, not pixels |
+| `stage(...)` | The next research stage |
+| `text(...)` | Stage text; every new stage needs it |
+| `obtain(..., 4)` | A requirement to bring four items |
 
-```text
-Research loaded: 2 added, 1 changed; categories: 1 added, 0 changed.
+`pack` is a placeholder namespace for your modpack, and `first_steps` is
+the entry's name. An Aurora pack could use `aurora:first_steps`.
+Use lowercase Latin characters and no spaces: `aurora:advanced_metals`.
+Every reference to an entry must use the same ID.
+The script filename does not determine the ID; the displayed title is independent.
+
+Later snippets using `pack:first_steps` assume you have created this entry.
+Place edits after its creation in the same handler, or in another handler
+that runs later. When splitting scripts into files, filenames such as
+`00_research.js` and `10_research_edits.js` help make the order explicit.
+Complete examples with their own IDs can be installed separately.
+
+## Stage requirements and rewards
+
+The following blocks replace the body of `.stage(stage => { ... })` in the
+first example. A stage can have several requirements; players must meet all of them.
+
+### Bring several types of items
+
+```js
+stage.text('Prepare eight iron ingots and four gold ingots.')
+stage.obtain('minecraft:iron_ingot', 8)
+stage.obtain('minecraft:gold_ingot', 4)
 ```
 
-The counts represent unique records: repeated edits to one ID count as one change.
-The message is emitted after the native loader succeeds, not when handlers are registered.
+`obtain` checks the inventory. Thaumaturge consumes the items when the
+stage is completed. Calls add separate requirements, so this example needs
+**both iron and gold**. Omitting the amount means one item.
 
-## API
+### Accept an item tag or a list of alternatives
 
-Use explicit namespaced IDs such as `pack:entry` and `minecraft:iron_ingot`.
-Research handlers run in order and see changes from earlier handlers.
-Records are read from the highest-priority active datapack resources, including
-`kubejs/data` and generated KubeJS resources. KubeThaum applies its overlay
-when the native registries load.
+```js
+stage.text('Bring four planks of any wood.')
+stage.obtain('#minecraft:planks', 4)
+```
 
-### Research event
+The `#` prefix means an item tag. This also accepts modded planks when
+they belong to `minecraft:planks`.
 
-| Method | Behavior |
-| --- | --- |
-| `create(id)` | Create a record; an existing ID is an error |
-| `replace(id)` | Replace all fields with a new builder; also works for a new ID |
-| `edit(id)` | Edit a record, preserving unspecified fields |
-| `edit(id, callback)` | Edit through a callback; returns `void` |
-| `copy(sourceId, newId)` | Create an independent snapshot under a new ID |
-| `category(id)` | Create a tab; an existing ID is an error |
-| `editCategory(id)` | Edit an existing tab |
-| `exists(id)` | Check whether a research entry exists |
-| `get(id)` / `getCategory(id)` | Return a detached Gson JSON snapshot |
+For a specific list of acceptable items:
 
-Use `edit()` to modify the live record. Mutating a `get()` snapshot does not
-change the registered research. Read Gson fields using
-`snapshot.get('name').getAsString()`, not `snapshot.name`.
+```js
+stage.text('Bring four iron or copper ingots.')
+stage.obtainAny(['minecraft:iron_ingot', 'minecraft:copper_ingot'], 4)
+```
 
-`copy()` snapshots all current fields, including stages, appearance, parents,
-siblings, addenda, translation keys and unknown JSON fields. Earlier script
-edits are included. Later edits to the source and copy remain independent.
-References and translation keys are kept literally; they are not redirected
-to the new ID. Player progress is not copied. The destination ID must be unused.
+This creates **one** requirement for a total of four matching items:
+iron, copper, or a mixture. Pass direct item IDs to `obtainAny`;
+use `obtain('#namespace:tag', amount)` for a tag.
+
+### Require item components
+
+```js
+stage.text('Prepare an undamaged iron sword.')
+stage.obtain('minecraft:iron_sword', 1, { 'minecraft:damage': 0 })
+```
+
+The third argument specifies Minecraft components to match on the item.
+Component values must use the format supported by your Minecraft version.
+
+### Require crafting
+
+```js
+stage.text('Craft a crafting table.')
+stage.craft('minecraft:crafting_table')
+```
+
+`craft` uses Thaumaturge's native requirement handling. In Thaumaturge 1.0.2,
+a recorded craft counts; holding a matching item can also satisfy the condition.
+It is not a counter for “craft N items after starting this stage.”
+Use `obtain` when you need players to hand in an exact quantity.
+Alternatives use `craftAny(['minecraft:chest', 'minecraft:barrel'], 1)`.
+
+### Require another research within a stage
+
+```js
+stage.text('Complete Metallurgy before attempting the next experiment.')
+stage.requireResearch('thaumaturge:metallurgy')
+```
+
+This gates completion of the current stage. Use `parent`, explained below,
+to create a dependency between entries on the research tree.
+
+### Knowledge, research notes, and warp
+
+```js
+stage.text('Study an Alchemy theory. This stage will reward an observation.')
+stage.requireKnowledge('theory', 'thaumaturge:alchemy', 32)
+stage.knowledge('observation', 'thaumaturge:alchemy', 16)
+stage.warp(1)
+```
+
+`requireKnowledge` adds a requirement; `knowledge` adds a stage reward.
+The knowledge types are `theory` and `observation`. Amounts use raw points:
+32 points make one theory, and 16 points make one observation.
+
+In Thaumaturge 1.0.2, theory requirements use research notes, while
+observation requirements use the native aspect cost handling.
+Do not assume they simply subtract the specified number from a knowledge bar.
+Configure `noteAspect` and `complexity` for research that uses notes:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.copy('thaumaturge:metallurgy', 'pack:advanced_metallurgy')
-    .title('Advanced metallurgy')
-    .position(4, 2)
-    .clearParents().parent('thaumaturge:metallurgy')
+  event.create('pack:metal_theory')
+    .category('thaumaturge:alchemy')
+    .title('Theory of Metals')
+    .icon('minecraft:gold_ingot')
+    .position(8, 2)
+    .complexity(2)
+    .noteAspect('thaumaturge:ordo', 3)
+    .noteAspect('thaumaturge:ignis', 2)
+    .stage(stage => {
+      stage.text('Solve a research note about the properties of metals.')
+      stage.requireKnowledge('theory', 'thaumaturge:alchemy', 32)
+    })
+    .stage(stage => {
+      stage.text('Your work has produced new observations.')
+      stage.knowledge('observation', 'thaumaturge:alchemy', 16)
+    })
 })
 ```
 
-### Research builder
+Note complexity can be `1`, `2`, or `3`. `warp(1)` grants warp when the
+stage is completed; omit it when you do not want that effect.
 
-| Method | Behavior |
-| --- | --- |
-| `category(id)`, `title(text)`, `position(column, row)` | Set the tab, title and grid coordinates |
-| `icon(id)` | Append an item ID, a texture path ending in `.png`, or `focus:namespace:part` |
-| `parent(id)` | Require the parent's full completion |
-| `parent(id, stage)` | Require native parent progress, numbered from **1**; `1` means started |
-| `hiddenParent(id)` | Parent without a visible connector; `parent('~pack:id@2')` is also supported |
-| `sibling(id)` | Native decorative/cascade-completion relationship |
-| `flag(name)` | `round`, `spiky`, `reverse`, `hidden`, `autounlock` or `hex` |
-| `autoUnlock()` | Shortcut for the `autounlock` flag |
-| `noteAspect(id, amount)` | Add/update an aspect for the research note |
-| `complexity(1..3)` | Set research note complexity |
-| `stage(callback)` | Append a stage |
-| `editStage(index, callback)` | Edit a stage; indices start at **0** |
-| `insertStage(index, callback)` | Insert a stage; index may range from 0 through the current stage count |
-| `removeStage(index)` | Remove a stage at a zero-based index |
-| `addendum(callback)` | Append a page shown after completion |
-| `clearStages()`, `clearParents()`, `clearIcons()`, `clearAddenda()` | Clear the corresponding collection |
+## Research chains
 
-Each research entry needs at least one stage. Each new stage or addendum needs
-`text()`. Repeated icons, parents and recipe references are not duplicated.
-Use a chain beginning with `edit(id)`, not with the callback overload that returns `void`.
-
-### Stages and additional pages
-
-Stages and addenda both support `text(textOrKey)`, `recipe(id)` and `requireResearch(id)`.
-For stages, `requireResearch` is a completion requirement; for addenda, it controls
-page visibility. `recipe(id)` displays a recipe and does not lock crafting.
-
-Stages additionally support:
-
-| Method | Behavior |
-| --- | --- |
-| `obtain(itemOrTag, amount = 1)` | Native inventory requirement |
-| `craft(itemOrTag, amount = 1)` | Native crafting requirement |
-| `obtainAny([itemIds], amount)`, `craftAny([itemIds], amount)` | Aggregate count of the listed direct items |
-| `obtain(itemOrTag, amount, components)` / `craft(...)` | Requirement with a JSON component patch |
-| `knowledge(type, category, amount)` | Knowledge reward |
-| `requireKnowledge(type, category, amount)` | Knowledge cost |
-| `warp(amount)` | Stage warp; must not be negative |
-| `construct(x, y, z, cells, cost = [])` | Native multiblock diagram |
-| `clearObtain()`, `clearCraft()` | Clear item requirements |
-| `clearRequiredResearch()`, `clearRequiredKnowledge()`, `clearRecipes()` | Clear dependencies, knowledge costs or displayed recipes |
-
-Amounts must be positive. Tags use `#minecraft:planks`. The `*Any` methods
-accept direct item IDs; use `obtain('#minecraft:planks', 2)` or `craft(...)`
-for a single tag. Components use the Minecraft 26.1.2 component patch format.
-Knowledge types are `theory` and `observation`; amounts are raw Thaumaturge points:
-32 points per theory, 16 per observation. Inventory and crafting behavior
-is implemented by Thaumaturge itself; `obtain` is not a history of item pickups.
-
-`construct` requires exactly `x*y*z` cells, top layer first, in x-major order.
-A cell is an item ID, `#tag` or `''`. Cost is an aspect list, for example
-`[{ aspect: 'thaumaturge:ignis', amount: 5 }]`.
-
-### Tabs
-
-`style(existingCategoryId)` copies only the icon, background and overlay.
-`icon(texture)`, `background(texture)`, `overlay(texture)` and `noOverlay()`
-configure existing textures. A tab icon is a texture, whereas a research icon
-may be an item. `index(nonNegativeNumber)` sets ordering.
-
-`formula(aspectId, amount)` adds/updates the research table knowledge formula.
-An empty formula is permitted; define a custom one when needed.
-`requireResearch(id)` sets the full-completion condition for opening a tab;
-`noRequiredResearch()` removes that condition.
-
-### Recipe gates
+Add a second entry that opens after First Experiments.
+Place this block after creating `pack:first_steps`, inside the research handler:
 
 ```js
+event.create('pack:advanced_metals')
+  .category('thaumaturge:alchemy')
+  .title('Advanced Alloys')
+  .icon('minecraft:gold_ingot')
+  .position(10, 0)
+  .parent('pack:first_steps')
+  .stage(stage => {
+    stage.text('Bring a gold ingot for the next experiment.')
+    stage.obtain('minecraft:gold_ingot')
+  })
+  .stage(stage => stage.text('Your alloy research is complete.'))
+```
+
+`parent(id)` requires full completion of the parent and creates a tree link.
+Several calls require **all** listed parents. You can reference built-in
+Thaumaturge research, such as `thaumaturge:metallurgy`.
+
+To require only that the parent has been started, use
+`.parent('pack:first_steps', 1)`. Parent stage numbers start at **1**:
+`1` means started, rather than the first stage being completed.
+`hiddenParent('pack:first_steps')` adds a dependency without drawing a parent line.
+
+Avoid circular completion dependencies. If A requires B and B requires A,
+players cannot complete either entry.
+
+## Your own tab
+
+This example is self-contained. Save it as
+`kubejs/server_scripts/workshop_tab.js`:
+
+```js
+ThaumaturgeEvents.research(event => {
+  event.category('pack:workshop')
+    .style('thaumaturge:alchemy')
+    .index(30)
+    .formula('thaumaturge:ordo', 2)
+    .formula('thaumaturge:ignis', 1)
+
+  event.create('pack:workshop_intro')
+    .category('pack:workshop')
+    .title('Welcome to the Workshop')
+    .icon('minecraft:crafting_table')
+    .position(0, 0)
+    .stage(stage => {
+      stage.text('Prepare a crafting table for your work.')
+      stage.obtain('minecraft:crafting_table')
+    })
+})
+```
+
+`style` takes the icon, background, and overlay from an existing tab,
+so you do not need custom textures. It copies appearance only; configure
+the knowledge formula and unlock condition separately. `formula` adds
+aspects to this category's research table formula; `index` controls tab order.
+
+For the tab name, create `kubejs/client_scripts/workshop_lang.js`:
+
+```js
+ClientEvents.lang('ru_ru', event => {
+  event.add('research_category.pack.workshop', 'Мастерская')
+})
+
+ClientEvents.lang('en_us', event => {
+  event.add('research_category.pack.workshop', 'Workshop')
+})
+```
+
+Tab names use `research_category.<namespace>.<path>`.
+For `pack:workshop`, the key is `research_category.pack.workshop`.
+
+To keep the tab locked until Metallurgy is complete, add
+`.requireResearch('thaumaturge:metallurgy')` to the category chain.
+The research that unlocks a tab must be accessible outside that tab.
+To change an existing tab:
+
+```js
+ThaumaturgeEvents.research(event => {
+  event.editCategory('thaumaturge:alchemy').index(5)
+})
+```
+
+## Names and translations
+
+For a personal pack, literal strings in `title` and `text` are enough.
+For multiple languages, use translation keys. Add this after creating
+your first entry to change its name and stage text:
+
+```js
+event.edit('pack:first_steps')
+  .title('research.pack.first_steps')
+  .editStage(0, stage => stage.text('research.pack.first_steps.stage.0'))
+  .editStage(1, stage => stage.text('research.pack.first_steps.stage.1'))
+```
+
+Add the translations to `kubejs/client_scripts/my_research_lang.js`:
+
+```js
+ClientEvents.lang('ru_ru', event => {
+  event.add('research.pack.first_steps', 'Первые опыты')
+  event.add('research.pack.first_steps.stage.0', 'Принесите четыре железных слитка.')
+  event.add('research.pack.first_steps.stage.1', 'Первые опыты завершены.')
+})
+
+ClientEvents.lang('en_us', event => {
+  event.add('research.pack.first_steps', 'First Experiments')
+  event.add('research.pack.first_steps.stage.0', 'Bring four iron ingots.')
+  event.add('research.pack.first_steps.stage.1', 'Your first experiments are complete.')
+})
+```
+
+You choose the keys for `title` and `text`; they must match the keys in
+the client file exactly. If a key appears instead of its translation,
+check the game language and the client's translation file.
+
+## Unlocking a recipe through research
+
+The book page and the actual recipe have different roles:
+
+- `stage.recipe(id)` displays a recipe on the page.
+- `Thaumaturge.requireResearch(recipe, id)` restricts using the recipe.
+
+This complete example adds Metal Transmutation and a crucible recipe.
+Save it as `kubejs/server_scripts/transmutation.js`:
+
+```js
+ThaumaturgeEvents.research(event => {
+  event.create('pack:transmutation')
+    .category('thaumaturge:alchemy')
+    .title('Metal Transmutation')
+    .icon('minecraft:gold_ingot')
+    .position(8, 4)
+    .stage(stage => {
+      stage.text('Prepare two iron ingots.')
+      stage.obtain('minecraft:iron_ingot', 2)
+    })
+    .stage(stage => {
+      stage.text('Complete this research to unlock the following crucible recipe.')
+      stage.recipe('pack:gold_transmutation')
+    })
+})
+
 ServerEvents.recipes(event => {
   const recipe = event.custom({
     type: 'thaumaturge:crucible',
     catalyst: 'minecraft:iron_ingot',
     aspects: [{ aspect: 'thaumaturge:ordo', amount: 5 }],
     result: { id: 'minecraft:gold_ingot', count: 1 }
-  }).id('pack:gold')
-  Thaumaturge.requireResearch(recipe, 'pack:metals')
+  }).id('pack:gold_transmutation')
+
+  Thaumaturge.requireResearch(recipe, 'pack:transmutation')
 })
 ```
 
-Create `pack:metals` first, for example with the minimal script above.
-`Thaumaturge.requireResearch(recipe, entry[, stage])` returns the same recipe
-and supports these native Thaumaturge types:
+The recipe has its own ID, `pack:gold_transmutation`; use that in
+`stage.recipe`. The crafting condition references the **research** ID,
+`pack:transmutation`. Until the entry is complete, this recipe is locked.
 
-- `arcane_workbench_shaped`, `arcane_workbench_shapeless`;
-- `crucible`, `infusion`, `infusion_enchantment`;
-- `dust_trigger_simple`, `dust_trigger_tag`, `dust_trigger_multiblock`.
+Do not require crafting an item using a recipe that only unlocks after
+this same research is complete: that creates a progression dead end.
 
-An unsupported recipe type, missing research entry or excessive stage value
-causes an error. This helper does not gate vanilla crafting or other mods' recipes.
-Call it inside `ServerEvents.recipes`.
+To unlock a recipe as soon as research has been started, pass `0` as
+the third argument: `Thaumaturge.requireResearch(recipe, 'pack:transmutation', 0)`.
+This uses Thaumaturge's native progress value, starting at zero.
+For full completion, **omit** the third argument.
 
-For manually constructed recipe JSON, use
-`research: Thaumaturge.gate(entry[, stage[, negate]])`.
-The returned value is Gson JSON. Omitting the stage requires full completion;
-`negate = true` inverts the condition and is available with the three-argument overload.
+The helper supports Thaumaturge's `arcane_workbench_shaped`,
+`arcane_workbench_shapeless`, `crucible`, `infusion`, `infusion_enchantment`,
+`dust_trigger_simple`, `dust_trigger_tag`, and `dust_trigger_multiblock` recipes.
+It does not gate ordinary `minecraft:crafting_shaped` or other mods' recipes.
+Thaumaturge defines the format of the remaining recipe fields.
 
-### Stage numbering
-
-| API | Numbering | Example |
-| --- | --- | --- |
-| `editStage`, `insertStage`, `removeStage` | From 0 | `editStage(0, ...)` edits the first stage |
-| `parent(id, stage)` | From 1 | `parent('pack:metals', 1)` requires a started parent |
-| Recipe `requireResearch` / `gate` | From 0 | Value `0` requires the research to be known, without full completion |
-| Error paths `stage[n]` / `addendum[n]` | From 0 | `stage[1]` refers to the second stage |
-
-Recipe stage values are Thaumaturge's native progress values. To require full
-completion, **omit the stage argument** instead of calculating a final index.
-
-### Diagnostics and limits
-
-Builder errors include the record ID, stage/addendum index and field. Examples:
-
-```text
-Research 'pack:metals', stage[0], field 'obtain': Item amount must be positive
-Research 'pack:metals', stage[0], field 'obtain[0].items': Unknown item 'minecraft:missing_item'
-```
-
-Look for the script location and stack trace in `kubejs/logs/server.log`
-and `logs/latest.log`. Invalid static item IDs in requirements and construct cells
-are checked before changed records load. Tags, aspects and components are
-ultimately resolved by native codecs.
-
-Validation covers duplicate IDs, missing research/category references, parent
-stage bounds and full-completion dependency cycles, including tab unlock conditions.
-Stage-qualified reciprocal parent links are excluded from full-completion cycle checks.
-An uncaught handler error aborts research loading rather than silently applying partial changes.
-Arbitrary kill/dimension tasks and universal recipe restrictions are outside version 1.0's scope.
-
-## Standalone examples
-
-Choose a folder under [examples/standalone](../examples/standalone).
-Copy its `server_scripts` contents to `kubejs/server_scripts/`; for the tab example,
-also install its `client_scripts` contents on the client.
-
-| Example | Purpose |
-| --- | --- |
-| [01_minimal](../examples/standalone/01_minimal/server_scripts/minimal.js) | A two-stage research entry |
-| [02_edit](../examples/standalone/02_edit/server_scripts/edit.js) | An addendum for native Metallurgy |
-| [03_category](../examples/standalone/03_category/server_scripts/category.js) | A tab and formula; [translation](../examples/standalone/03_category/client_scripts/category_lang.js) |
-| [04_recipe_gate](../examples/standalone/04_recipe_gate/server_scripts/recipe_gate.js) | Research and a recipe gated by it |
-| [05_copy](../examples/standalone/05_copy/server_scripts/copy.js) | A native record copy with an edited first stage |
-
-Each example works independently with the required mods. Their new IDs differ,
-so the examples can also be installed together. Select the script files;
-do not copy the whole `standalone` directory into `server_scripts`.
-The full Metallurgy demonstration remains in
-[research.js](../examples/server_scripts/research.js),
-[edit_research.js](../examples/server_scripts/edit_research.js) and
-[research_lang.js](../examples/client_scripts/research_lang.js).
-Some bundled example text is Russian; replace literal text or supply translation keys as needed.
-
-## Editor autocomplete
-
-1. Copy [kubethaum.d.ts](../types/kubethaum.d.ts) and
-   [globals.d.ts](../types/globals.d.ts) to `kubejs/types/`.
-2. If there is no `jsconfig.json`, copy the [template](../types/jsconfig.example.json)
-   to `kubejs/jsconfig.json`. Otherwise, add `types/**/*.d.ts` to its `include`
-   while preserving existing settings.
-3. Open `kubejs` in VS Code; restart the JavaScript language server if necessary.
-
-Declarations are editor-only and do not replace runtime ID/value validation.
-If another declaration set already defines `ThaumaturgeEvents` or `Thaumaturge`,
-do not also include `globals.d.ts`. The namespace-only `kubethaum.d.ts` remains
-available for JSDoc:
+When writing JSON manually, the equivalent field inside `event.custom({...})` is:
 
 ```js
-/** @param {KubeThaum.ResearchEvent} event */
-function registerResearch(event) {
-  event.create('pack:sample').stage(stage => stage.text('Example'))
-}
-ThaumaturgeEvents.research(registerResearch)
+research: Thaumaturge.gate('pack:transmutation')
 ```
 
-Optional developer validation (PowerShell):
+`Thaumaturge.gate(id, stage, true)` inverts a progress condition.
+Usually `requireResearch` is sufficient; it also checks that the entry exists.
 
-```powershell
-npm.cmd install --prefix .tools/typescript --no-audit --no-fund --ignore-scripts typescript@5.9.3
-node .tools/typescript/node_modules/typescript/lib/tsc.js --strict --noEmit --target ES2020 src/test/types/api.ts
-$examples = @(rg --files examples/standalone -g '*.js')
-node .tools/typescript/node_modules/typescript/lib/tsc.js --strict --noEmit --allowJs --checkJs --target ES2020 types/globals.d.ts src/test/types/kubejs-stubs.d.ts @examples
+## Editing existing research
+
+`edit` preserves fields you do not touch. Add copper to the first stage
+of built-in Metallurgy and a note at the end of the entry:
+
+```js
+ThaumaturgeEvents.research(event => {
+  event.edit('thaumaturge:metallurgy')
+    .editStage(0, stage => {
+      stage.obtain('minecraft:copper_ingot', 8)
+    })
+    .addendum(page => {
+      page.text('This pack also uses copper in metallurgical experiments.')
+    })
+})
 ```
 
-Node.js is only needed for declaration checks, not for the mod or Gradle build.
+The copper requirement is **added** to the original requirements.
+To replace only the items players must bring, clear those requirements first:
 
-## Building and testing
-
-Clone the source repository before running build commands:
-
-```shell
-git clone https://github.com/BMProjects-Development/KubeThaum.git
-cd KubeThaum
+```js
+ThaumaturgeEvents.research(event => {
+  event.edit('thaumaturge:metallurgy').editStage(0, stage => {
+    stage.text('Begin by gathering four copper ingots.')
+    stage.clearObtain()
+    stage.obtain('minecraft:copper_ingot', 4)
+  })
+})
 ```
 
-Use JDK 25 and set `JAVA_HOME` if necessary. The Gradle Wrapper downloads Gradle
-and dependencies automatically; a global Gradle installation is not required.
+`clearObtain` does not remove crafting, knowledge, or other requirements.
+Use `clearCraft`, `clearRequiredResearch`, `clearRequiredKnowledge`, and
+`clearRecipes` for those fields.
 
-```powershell
-.\gradlew.bat build
-.\gradlew.bat runGameTestServer
-.\gradlew.bat runGameTestServer '-Pneo_version=26.1.2.115'
-.\gradlew.bat releaseArtifacts
+To change the stage structure, inside the research handler:
+
+```js
+event.edit('pack:first_steps')
+  .insertStage(1, stage => {
+    stage.text('Between the first stage and the conclusion, prepare a gold ingot.')
+    stage.obtain('minecraft:gold_ingot')
+  })
 ```
 
-On Linux/macOS, use `chmod +x gradlew`, followed by
-`./gradlew build releaseArtifacts runGameTestServer`.
+`editStage(0, ...)` changes the first stage; `insertStage(1, ...)` inserts
+before the old second stage; `removeStage(1)` removes the second stage.
+**Editing indices start at 0.** `stage(...)` always appends to the end.
+Inserting or removing a stage shifts later indices.
 
-`build` runs 37 research/copy/diagnostic checks and 9 compatibility checks against
-the released KubeJS bytecode. GameTest runs actual examples and native codecs
-in the separate `run-gametest` directory, checking research/category loading,
-item tags, independent copies, recipe gates and full/partial progress through
-Thaumaturge's disk and network codecs. Test classes and scripts are not bundled
-in the game JAR. GUI and actual multiplayer scenarios require manual testing.
+Keep entry IDs stable when updating a published pack. Player progress is
+stored by ID and stage number; rearranging stages changes the meaning of
+existing progress. Text, icons, and additional pages are easier to update.
 
-Dependencies are fetched from Maven/CurseMaven and are not bundled in the addon.
-The addon's own compatibility library is embedded automatically. For development
-against an existing installation, use `-PlocalModsDir=D:/path/to/instance/mods`.
+## Copying and replacing research
 
-Outputs:
+Use `copy` to make a variant of an existing entry:
 
-- Game JAR: `build/libs/kubethaum-26.1.2-1.0.jar`.
-- Source JAR: `build/libs/kubethaum-26.1.2-1.0-sources.jar`.
-- Distribution: `build/distributions/KubeThaum-1.0.zip` (game JAR in `mods`, guides, examples, declarations).
-- `releaseArtifacts` stages only the current version's three files in `build/release/`.
+```js
+ThaumaturgeEvents.research(event => {
+  event.copy('thaumaturge:metallurgy', 'pack:copper_metallurgy')
+    .title('Copper Metallurgy')
+    .position(10, 4)
+    .clearIcons().icon('minecraft:copper_ingot')
+    .clearParents().parent('thaumaturge:metallurgy')
+    .editStage(0, stage => {
+      stage.text('Start a new experiment with four copper ingots.')
+      stage.clearObtain().obtain('minecraft:copper_ingot', 4)
+    })
+})
+```
 
-## Automatic builds and releases
+All current fields are copied. Editing the copy does not change the
+original, and the new ID has separate player progress. Recipe references,
+parents, addendum conditions, and translation keys retain their values;
+change them when the copy needs its own. The target ID must be unused.
 
-The [build.yml workflow](https://github.com/BMProjects-Development/KubeThaum/blob/main/.github/workflows/build.yml)
-runs on Linux with Java 25:
+To rewrite an existing entry completely:
 
-- Branch pushes, pull requests, `v*` tag pushes and manual dispatch trigger builds.
-- The NeoForge 109/115 matrix runs `build`, `releaseArtifacts` and `runGameTestServer`.
-- TypeScript additionally checks declarations and standalone examples.
-- Actions stores the game JAR, source JAR and distribution ZIP from the minimum-version NeoForge 109 build.
-- After both matrix builds succeed, a default-branch push or a `v*` tag push
-  publishes a new GitHub release. Manual dispatch on the default branch may also publish it.
-- The version comes from `mod_version` in `gradle.properties`; `1.0` produces `v1.0`.
-  A manually pushed tag must match that property.
-- Existing releases are preserved; publishing another release requires a new version.
-  An existing tag without a release must point to the commit being built, or publishing fails.
-- PRs and ordinary development branches only build. The dedicated release job uses
-  the built-in `GITHUB_TOKEN` with `contents: write`; no extra secrets are required.
+```js
+ThaumaturgeEvents.research(event => {
+  event.replace('thaumaturge:metallurgy')
+    .category('thaumaturge:alchemy')
+    .title('This Pack\'s Metallurgy')
+    .icon('minecraft:iron_ingot')
+    .position(4, 0)
+    .stage(stage => {
+      stage.text('Metallurgy now begins with gathering eight iron ingots.')
+      stage.obtain('minecraft:iron_ingot', 8)
+    })
+})
+```
 
-For the next release, change `mod_version`, update guides/declarations when API
-changes require it, and push the commit to the default branch. Alternatively,
-push the matching `v<mod_version>` tag for the prepared commit.
-For manual execution, select Actions → Build and Release → Run workflow
-on the default branch. Repository/organization policies must allow the actions
-and permit GitHub Releases writes with the built-in token.
+`replace` starts the entry over: original stages, parents, icons, and
+addenda are not preserved. Use `edit` for smaller changes.
+The editing and replacement examples affecting the same entry are
+alternatives; install the one you want.
 
-## Checks before publishing
+## Additional pages and appearance
 
-GameTests validate scripts and codecs but do not open a GUI or connect a real
-client. Use a separate test world with matching mod versions for these checks:
+An addendum appears on completed research. It can require completion
+of another entry, which is useful for text revealed later:
 
-- [ ] Thaumonomicon tabs, titles, icons, stages and recipes display correctly.
-- [ ] Reopening a world preserves completed/partial progress without duplicated stages or addenda.
-- [ ] Editing only text/title for an existing ID applies the new text while preserving progress.
-- [ ] A new-ID copy has independent progress; the original retains its progress.
-- [ ] `/reload` updates recipes without duplicating research; research changes apply after reopening.
-- [ ] A client on a dedicated server sees server-side entries and the correct recipe gate state.
-- [ ] Reconnecting preserves progress and Thaumonomicon display.
+```js
+ThaumaturgeEvents.research(event => {
+  event.edit('pack:first_steps').addendum(page => {
+    page.text('Metallurgy has given you a new perspective on your first experiments.')
+    page.requireResearch('thaumaturge:metallurgy')
+  })
+})
+```
 
-For progress-preservation checks, keep research IDs and stage order/count unchanged.
-Changing the stage structure changes the meaning of saved indices.
+Addenda also support `recipe(id)` to display recipes.
+`clearAddenda()` removes existing addenda before adding replacements.
+
+To change a research entry's shape and icon:
+
+```js
+event.edit('pack:first_steps')
+  .flag('round')
+  .clearIcons()
+  .icon('minecraft:gold_ingot')
+```
+
+Available Thaumaturge flags are `round`, `spiky`, `reverse`, `hidden`,
+`autounlock`, and `hex`. `autoUnlock()` is shorthand for `flag('autounlock')`.
+Thaumaturge determines flag behavior; ordinary entries do not need flags.
+`icon` appends an icon; `clearIcons` lets you replace the original set.
+You can also use a path to an existing `.png` texture instead of an item ID.
+A **tab's** `icon` takes a texture path, rather than an item ID.
+
+A stage can display a construction diagram. For a column of two stone
+blocks, place this inside `.stage(stage => { ... })`:
+
+```js
+stage.text('Example diagram: two stone blocks, one above the other.')
+stage.construct(1, 2, 1, [
+  'minecraft:stone', // top layer
+  'minecraft:stone'  // bottom layer
+], [{ aspect: 'thaumaturge:ordo', amount: 2 }])
+```
+
+Dimensions are `x, y, z`, and the list must contain exactly `x*y*z` cells.
+List layers from top to bottom; within a layer, x comes first, then z.
+`''` means an empty cell, and `#namespace:tag` means a tag.
+This displays a diagram; it does not register a new multiblock or its recipe.
+
+## The complete Workshop
+
+[06_workshop](../examples/standalone/06_workshop) is a complete example with:
+
+1. A Workshop tab using Alchemy's appearance.
+2. Preparing the Workshop: handing in planks and a crafting table.
+3. Metal Transmutation: unlocked after preparation and requiring iron.
+4. An iron-to-gold crucible recipe, unlocked by completing the second research.
+5. English and Russian translations for every title and page.
+
+Copy [workshop.js](../examples/standalone/06_workshop/server_scripts/workshop.js)
+to `kubejs/server_scripts/` and
+[workshop_lang.js](../examples/standalone/06_workshop/client_scripts/workshop_lang.js)
+to `kubejs/client_scripts/`. Restart the client and open your world.
+This example uses the `workshop` namespace, so it can coexist with the
+`pack:*` tutorial scripts in this guide.
+
+Start by changing the quantities of planks and iron. Then add a third
+entry with `.parent('workshop:transmutation')` and its own ID.
+If you rename the namespace, update entry IDs, the tab, recipe,
+dependencies, and translation keys together.
+
+Other ready-to-use scripts:
+
+| Example | Use it to |
+| --- | --- |
+| [01_minimal](../examples/standalone/01_minimal/server_scripts/minimal.js) | Add a small entry to an existing tab |
+| [02_edit](../examples/standalone/02_edit/server_scripts/edit.js) | Extend a Thaumaturge entry |
+| [03_category](../examples/standalone/03_category/server_scripts/category.js) | Create a tab; include its [client translation](../examples/standalone/03_category/client_scripts/category_lang.js) |
+| [04_recipe_gate](../examples/standalone/04_recipe_gate/server_scripts/recipe_gate.js) | Add research with a gated crucible recipe |
+| [05_copy](../examples/standalone/05_copy/server_scripts/copy.js) | Make a variant of built-in Metallurgy |
+| [Full metallurgy example](../examples/server_scripts/research.js) | Use research notes, knowledge, and a conditional addendum; [translations](../examples/client_scripts/research_lang.js) |
+
+Move the desired `.js` files from nested `server_scripts` and `client_scripts`
+folders into KubeJS's matching folders. The `examples` folder itself is not executed.
+
+## Quick reference
+
+| Task | Method |
+| --- | --- |
+| Create / edit / replace | `event.create(id)` / `event.edit(id)` / `event.replace(id)` |
+| Copy to a new ID | `event.copy(sourceId, newId)` |
+| Check whether an entry exists | `event.exists(id)` |
+| Create / edit a tab | `event.category(id)` / `event.editCategory(id)` |
+| Name, location, and icon | `title(text)`, `category(id)`, `position(x, y)`, `icon(id)` |
+| Parent / parent without a line | `parent(id)` / `hiddenParent(id)` |
+| Append / edit / insert / remove a stage | `stage(callback)`, `editStage(index, callback)`, `insertStage(index, callback)`, `removeStage(index)` |
+| Clear stages, parents, icons, or addenda | `clearStages()`, `clearParents()`, `clearIcons()`, `clearAddenda()` |
+| Text, displayed recipe, research prerequisite | `text(text)`, `recipe(id)`, `requireResearch(id)` |
+| Items / alternative items | `obtain(idOrTag, amount)` / `obtainAny(ids, amount)` |
+| Crafting / alternative crafts | `craft(idOrTag, amount)` / `craftAny(ids, amount)` |
+| Knowledge reward / knowledge requirement | `knowledge(type, category, amount)` / `requireKnowledge(type, category, amount)` |
+| Research notes and warp | `noteAspect(id, amount)`, `complexity(1..3)`, `stage.warp(amount)` |
+| Additional page | `addendum(callback)` |
+| Tab appearance and access | `style(id)`, `icon(texture)`, `background(texture)`, `overlay(texture)`, `noOverlay()`, `index(n)`, `requireResearch(id)`, `noRequiredResearch()` |
+| Tab formula | `formula(aspectId, amount)` |
+| Gate a recipe | `Thaumaturge.requireResearch(recipe, researchId[, progress])` |
+
+`event.edit(id, research => { ... })` is the callback editing form.
+It returns `void`; use `event.edit(id)` for method chaining.
+`get(id)` and `getCategory(id)` return detached Gson JSON snapshots:
+read the name with `snapshot.get('name').getAsString()`.
+Changing a snapshot does not change the entry; use `edit` instead.
+
+For editor autocomplete, copy [kubethaum.d.ts](../types/kubethaum.d.ts)
+and [globals.d.ts](../types/globals.d.ts) to `kubejs/types/`, and the
+[jsconfig template](../types/jsconfig.example.json) to `kubejs/jsconfig.json`.
+For an existing configuration, add `types/**/*.d.ts` to `include`.
+The game does not need these files. If another declaration set already
+defines `ThaumaturgeEvents` and `Thaumaturge`, do not include `globals.d.ts` again.
+
+## When something does not appear
+
+| Symptom | What to check |
+| --- | --- |
+| Changes do not appear | Reopen the world; `/reload` does not reload research |
+| An entry is missing from its tab | Check its category, coordinates, parents, and the tab's unlock condition |
+| Translation keys appear as text | Check `ClientEvents.lang`, game language, and the client file |
+| Old requirements remain | Methods append requirements; use the matching `clear...` method first |
+| Duplicate ID error | Do not install two copies of one example; use `edit` to change an entry |
+| A recipe is displayed but not locked | Add `Thaumaturge.requireResearch` in the recipe event |
+| A parent or item cannot be found | Check its namespace and ID; installing a mod does not guarantee a particular ID exists |
+
+Look for script errors in `kubejs/logs/server.log` and `logs/latest.log`.
+For example, `Research 'pack:first_steps', stage[0], field 'obtain'` points
+to the item requirement on this entry's **first** stage.
+Start with one working example and make one change at a time, so you can
+see which line affected the result.
