@@ -112,6 +112,8 @@ public final class KubeThaumSmoke extends GameTestInstance {
                 helper.fail("Native network codec lost scripted progress"); return;
             }
         } finally { buffer.release(); }
+        try { ScriptCheckSmoke.verify(helper.getLevel().getServer()); }
+        catch (Exception | AssertionError error) { helper.fail(error.getMessage()); return; }
         helper.succeed();
     }
     @Override public MapCodec<? extends GameTestInstance> codec() { return MapCodec.unit(this); }

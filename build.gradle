@@ -99,7 +99,13 @@ tasks.register('verifyCompatibility', JavaExec) {
     mainClass = 'org.bmp.kubethaum.CompatibilityVerification'
     enableAssertions = true
 }
-tasks.named('check') { dependsOn 'verifyResearch', 'verifyCompatibility' }
+tasks.register('verifyScriptCheck', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'org.bmp.kubethaum.ScriptCheckVerification'
+    enableAssertions = true
+}
+tasks.named('check') { dependsOn 'verifyResearch', 'verifyCompatibility', 'verifyScriptCheck' }
 tasks.named('sourcesJar') { from sourceSets.compat.allSource }
 tasks.named('test') { enabled = false } // Checks use verifyResearch and the actual GameTest server.
 

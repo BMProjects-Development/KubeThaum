@@ -1,0 +1,7 @@
+{
+  "commands.kubethaum.check.success": "KubeThaum: checked %s files and %s research handlers; no errors found in the checked scope.",
+  "commands.kubethaum.check.failed": "KubeThaum: check failed or incomplete — %s problem(s).",
+  "commands.kubethaum.check.unavailable": "KubeThaum: check could not complete: %s",
+  "commands.kubethaum.check.more": "The remaining problems are in logs/latest.log.",
+  "commands.kubethaum.check.scope": "No changes applied. Fresh server script syntax and isolated research handlers were checked. Recipes and other event callbacks were not executed; external KubeJS/game bindings are unavailable. Reopen the world to apply research changes."
+}

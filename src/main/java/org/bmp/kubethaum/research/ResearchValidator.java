@@ -19,13 +19,13 @@ public final class ResearchValidator {
                                 Set<String> changedEntries, Set<String> changedCategories) {
         for (String id : changedEntries) {
             var entry = entries.get(id);
-            known(categories, entry.get("category").getAsString(), id + " category");
+            known(categories, entry.get("category").getAsString(), "Research '" + id + "', field 'category'");
             ResearchJson.text(entry.get("name").getAsString());
             var stages = entry.getAsJsonArray("stages");
             if (stages == null || stages.isEmpty()) fail(id, "needs at least one stage");
             for (var value : array(entry, "parents")) {
                 var parent = ResearchJson.parent(value.getAsString());
-                known(entries, parent.id(), id + " parent");
+                known(entries, parent.id(), "Research '" + id + "', field 'parents'");
                 int stageCount = entries.get(parent.id()).getAsJsonArray("stages").size();
                 if (parent.stage() > stageCount) fail(id, "parent " + value + " exceeds its " + stageCount + " stages");
             }
@@ -50,7 +50,7 @@ public final class ResearchValidator {
         }
         for (String id : changedCategories) {
             var category = categories.get(id);
-            if (category.has("required_research")) known(entries, category.get("required_research").getAsString(), id + " required research");
+            if (category.has("required_research")) known(entries, category.get("required_research").getAsString(), "Category '" + id + "', field 'required_research'");
         }
         // Visit the complete graph from edited nodes, so a cycle through a vanilla node is detected.
         // Stage-qualified parents can intentionally form reciprocal links and are excluded.

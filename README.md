@@ -8,6 +8,7 @@ and Thaumonomicon tabs with JavaScript, using Thaumaturge's native research syst
 - Add custom tabs and research dependencies.
 - Gate supported Thaumaturge recipes behind research progress.
 - Diagnose script errors and use editor autocomplete declarations.
+- Check saved research scripts with `/kubethaum check` without applying changes.
 
 **Minecraft 26.1.2 · NeoForge 26.1.2.109+ (before 26.2) · Java 25**
 

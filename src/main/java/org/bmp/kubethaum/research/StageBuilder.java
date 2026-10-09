@@ -12,18 +12,23 @@ public final class StageBuilder extends PageBuilder<StageBuilder> {
     public StageBuilder obtain(String item) { return obtain(item, 1); }
     public StageBuilder obtain(String item, int amount) { return obtain(item, amount, null); }
     public StageBuilder obtain(String item, int amount, JsonObject components) {
-        return field("obtain", () -> ResearchJson.array(data, "obtain").add(ResearchJson.requirement(new String[]{item}, amount, components)));
+        return field("obtain", () -> requirement("obtain", new String[]{item}, amount, components));
     }
     public StageBuilder obtainAny(String[] items, int amount) {
-        return field("obtain", () -> ResearchJson.array(data, "obtain").add(ResearchJson.requirement(items, amount, null)));
+        return field("obtain", () -> requirement("obtain", items, amount, null));
     }
     public StageBuilder craft(String item) { return craft(item, 1); }
     public StageBuilder craft(String item, int amount) { return craft(item, amount, null); }
     public StageBuilder craft(String item, int amount, JsonObject components) {
-        return field("craft", () -> ResearchJson.array(data, "craft").add(ResearchJson.requirement(new String[]{item}, amount, components)));
+        return field("craft", () -> requirement("craft", new String[]{item}, amount, components));
     }
     public StageBuilder craftAny(String[] items, int amount) {
-        return field("craft", () -> ResearchJson.array(data, "craft").add(ResearchJson.requirement(items, amount, null)));
+        return field("craft", () -> requirement("craft", items, amount, null));
+    }
+    private void requirement(String field, String[] items, int amount, JsonObject components) {
+        var array = ResearchJson.array(data, field);
+        ResearchDiagnostics.mark(context + ", field '" + field + "[" + array.size() + "].items'");
+        array.add(ResearchJson.requirement(items, amount, components));
     }
     public StageBuilder knowledge(String type, String category, int amount) {
         return field("knowledge", () -> ResearchJson.array(data, "knowledge").add(ResearchJson.knowledge(type, category, amount)));

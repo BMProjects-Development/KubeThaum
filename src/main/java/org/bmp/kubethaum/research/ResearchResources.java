@@ -70,7 +70,7 @@ public final class ResearchResources implements ResourceManager {
             summary.addedResearch(), summary.changedResearch(), summary.addedCategories(), summary.changedCategories());
     }
 
-    private static Map<String, JsonObject> read(ResourceManager resources, String directory) {
+    static Map<String, JsonObject> read(ResourceManager resources, String directory) {
         var result = new LinkedHashMap<String, JsonObject>();
         resources.listResources(directory, id -> id.getPath().endsWith(".json")).forEach((file, resource) -> {
             String path = file.getPath().substring(directory.length() + 1, file.getPath().length() - 5);
