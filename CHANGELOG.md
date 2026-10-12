@@ -2,6 +2,7 @@
 
 ## 1.1
 
+- Add a mod icon to the NeoForge mod list.
 - Native KubeJS builders for arcane shaped/shapeless crafting, crucible,
   infusion, infusion enchantments, and three Salis Mundus transformation formats.
 - Edit loaded recipes with standard KubeJS filters and item replacements.
