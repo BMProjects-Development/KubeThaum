@@ -51,8 +51,8 @@ public final class KubeThaumSmoke extends GameTestInstance {
         if (tagged == null || !tagged.stages().getFirst().obtain().getFirst().matches(new ItemStack(Items.OAK_PLANKS))) {
             helper.fail("Item tags were lost during research registry loading"); return;
         }
-        var basic = entries.getValue(Identifier.parse("pack:basic_metallurgy"));
-        var advanced = entries.getValue(Identifier.parse("pack:advanced_metallurgy"));
+        var basic = entries.getValue(Identifier.parse("kubejs:basic_metallurgy"));
+        var advanced = entries.getValue(Identifier.parse("kubejs:advanced_metallurgy"));
         var edited = entries.getValue(Identifier.parse("thaumaturge:metallurgy"));
         if (basic == null || advanced == null || edited == null) { helper.fail("Scripted research missing"); return; }
         var source = entries.getValue(Identifier.parse("pack:copy_source"));
@@ -74,7 +74,7 @@ public final class KubeThaumSmoke extends GameTestInstance {
         if (edited.addenda().stream().noneMatch(page -> page.textKey().startsWith("Copper is now"))) {
             helper.fail("Existing research edit did not apply"); return;
         }
-        var category = registries.lookupOrThrow(IResearchCategory.REGISTRY_KEY).getValue(Identifier.parse("pack:metallurgy"));
+        var category = registries.lookupOrThrow(IResearchCategory.REGISTRY_KEY).getValue(Identifier.parse("kubejs:metallurgy"));
         if (category == null || category.formula().size() != 2 || !category.background().getPath().contains("back_3")) {
             helper.fail("Category style/formula incorrect"); return;
         }
@@ -83,7 +83,7 @@ public final class KubeThaumSmoke extends GameTestInstance {
         var decoded = ResearchEntry.CODEC.parse(ops, json).getOrThrow();
         if (decoded.stages().size() != basic.stages().size()) { helper.fail("Native codec roundtrip failed"); return; }
         var recipe = helper.getLevel().getServer().getRecipeManager()
-            .byKey(ResourceKey.create(Registries.RECIPE, Identifier.parse("pack:enchanted_alloy"))).orElseThrow().value();
+            .byKey(ResourceKey.create(Registries.RECIPE, Identifier.parse("kubejs:gold_from_iron"))).orElseThrow().value();
         if (!(recipe instanceof ResearchGated gated) || gated.researchGate().isEmpty()) {
             helper.fail("KubeJS recipe gate was lost"); return;
         }
@@ -96,7 +96,7 @@ public final class KubeThaumSmoke extends GameTestInstance {
         knowledge.markComplete(gate.entry());
         if (!ResearchGate.passes(player, gate)) { helper.fail("Recipe still locked after research completion"); return; }
         // Exercise the native save and client-sync codecs without depending on a connected GUI client.
-        var partialId = Identifier.parse("pack:advanced_metallurgy");
+        var partialId = Identifier.parse("kubejs:advanced_metallurgy");
         knowledge.addResearch(partialId);
         knowledge.setResearchStage(partialId, 1);
         var saved = PlayerKnowledge.CODEC.codec().encodeStart(ops, knowledge).getOrThrow();

@@ -9,10 +9,10 @@ ServerEvents.recipes(event => {
   let stageRejected = false
   let vanillaRejected = false
   try { Thaumaturge.requireResearch(test, 'pack:missing_research') } catch (error) { missingRejected = true }
-  try { Thaumaturge.requireResearch(test, 'pack:basic_metallurgy', 50) } catch (error) { stageRejected = true }
+  try { Thaumaturge.requireResearch(test, 'kubejs:basic_metallurgy', 50) } catch (error) { stageRejected = true }
   const vanilla = event.shapeless('minecraft:flint', ['minecraft:gravel']).id('kubethaum:vanilla_validation')
-  try { Thaumaturge.requireResearch(vanilla, 'pack:basic_metallurgy') } catch (error) { vanillaRejected = true }
+  try { Thaumaturge.requireResearch(vanilla, 'kubejs:basic_metallurgy') } catch (error) { vanillaRejected = true }
   if (!missingRejected || !stageRejected || !vanillaRejected) throw new Error('Invalid recipe gate was accepted')
-  Thaumaturge.requireResearch(test, 'pack:basic_metallurgy', 0)
+  Thaumaturge.requireResearch(test, 'kubejs:basic_metallurgy', 0)
   console.info('KubeThaum: missing research and invalid gate stages rejected')
 })

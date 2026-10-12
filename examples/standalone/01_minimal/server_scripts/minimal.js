@@ -1,10 +1,15 @@
-// Standalone: copy this file to kubejs/server_scripts/ and reopen the world.
+// Add a research entry to the Alchemy tab. Copy to kubejs/server_scripts/.
 ThaumaturgeEvents.research(event => {
-  event.create('example:first_research')
+  event.create('kubejs:ironworking')
     .category('thaumaturge:alchemy')
-    .title('Первое исследование')
+    .title('Обработка железа')
     .icon('minecraft:iron_ingot')
     .position(8, 0)
-    .stage(stage => stage.text('Соберите четыре железных слитка.').obtain('minecraft:iron_ingot', 4))
-    .stage(stage => stage.text('Свойства железа изучены.'))
+    .stage(stage => {
+      stage.text('Подготовьте четыре железных слитка для опытов с металлами.')
+      stage.obtain('minecraft:iron_ingot', 4)
+    })
+    .stage(stage => {
+      stage.text('Железо готово к дальнейшим алхимическим опытам.')
+    })
 })

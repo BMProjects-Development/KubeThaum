@@ -18,8 +18,8 @@ import net.minecraft.world.item.crafting.Recipe;
 final class RecipeSmoke {
     static void verify(MinecraftServer server) {
         var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
-        for (var id : new String[]{"crucible", "arcane_shaped", "arcane_shapeless", "infusion", "enchantment", "dust_simple", "dust_tag", "dust_multiblock"}) {
-            var recipe = get(server, "recipes_demo:" + id);
+        for (var id : new String[]{"gold_in_crucible", "gold_at_arcane_workbench", "gold_from_redstone", "diamond_infusion", "swift_boots", "gilded_iron", "gilded_logs", "infernal_furnace"}) {
+            var recipe = get(server, "kubejs:" + id);
             var json = Recipe.CODEC.encodeStart(ops, recipe).getOrThrow();
             Recipe.CODEC.parse(ops, json).getOrThrow();
         }
@@ -28,7 +28,7 @@ final class RecipeSmoke {
         require(json.getAsJsonArray("aspects").get(0).getAsJsonObject().get("amount").getAsInt() == 8, "aspect scaling and rounding");
         require(edited.catalyst().test(new ItemStack(Items.COPPER_INGOT)), "replaceInput catalyst");
         require(json.getAsJsonObject("result").get("id").getAsString().equals("minecraft:diamond"), "replaceOutput");
-        require(((ResearchGated)edited).researchGate().orElseThrow().entry().toString().equals("pack:basic_metallurgy"), "research survives edits");
+        require(((ResearchGated)edited).researchGate().orElseThrow().entry().toString().equals("kubejs:basic_metallurgy"), "research survives edits");
         var input = new com.leclowndu93150.thaumaturge.content.recipe.crucible.CrucibleRecipeInput(
             new ItemStack(Items.COPPER_INGOT), edited.aspects());
         require(edited.matches(input, server.overworld()) && edited.assemble(input).is(Items.DIAMOND), "native crucible/Thaumatorium matching and output");
@@ -38,7 +38,7 @@ final class RecipeSmoke {
         var infusion = (InfusionRecipe) get(server, "kubethaum:infusion_edit");
         var infusionJson = Recipe.CODEC.encodeStart(ops, infusion).getOrThrow().getAsJsonObject();
         require(infusionJson.get("instability").getAsInt() == 2 && infusionJson.getAsJsonArray("components").toString().contains("lapis_lazuli"), "infusion edits");
-        var arcane = (ArcaneCraftingRecipe) get(server, "recipes_demo:arcane_shapeless");
+        var arcane = (ArcaneCraftingRecipe) get(server, "kubejs:gold_from_redstone");
         var arcaneJson = Recipe.CODEC.encodeStart(ops, arcane).getOrThrow().getAsJsonObject();
         require(arcaneJson.getAsJsonArray("crystals").isEmpty(), "default empty crystals");
         var patch = Recipe.CODEC.encodeStart(ops, get(server, "kubethaum:infusion_patch")).getOrThrow().getAsJsonObject();

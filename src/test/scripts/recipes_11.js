@@ -3,7 +3,7 @@ ServerEvents.recipes(event => {
   let changed
   event.forEachRecipe({ id: 'kubethaum:recipe_edit' }, recipe => {
     changed = recipe
-    recipe.research('pack:basic_metallurgy').aspect('thaumaturge:ordo', 5).scaleAspects(1.5)
+    recipe.research('kubejs:basic_metallurgy').aspect('thaumaturge:ordo', 5).scaleAspects(1.5)
     recipe.serialize()
     if (recipe.json.get('pack_custom_field').getAsString() !== 'keep') throw new Error('Unknown recipe fields were lost')
   })

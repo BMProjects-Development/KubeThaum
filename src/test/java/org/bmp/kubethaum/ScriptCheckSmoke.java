@@ -12,7 +12,7 @@ import org.bmp.kubethaum.research.ResearchCheckCommand;
 final class ScriptCheckSmoke {
     static void verify(MinecraftServer server) throws Exception {
         var registry = server.registryAccess().lookupOrThrow(IResearchEntry.REGISTRY_KEY);
-        var original = registry.getValue(Identifier.parse("pack:basic_metallurgy"));
+        var original = registry.getValue(Identifier.parse("kubejs:basic_metallurgy"));
         long count = registry.listElements().count();
         Path file = KubeJSPaths.SERVER_SCRIPTS.resolve("zz_check_verification.js");
         Path ignored = KubeJSPaths.SERVER_SCRIPTS.resolve("zz_check_ignored.js");
@@ -24,7 +24,7 @@ final class ScriptCheckSmoke {
                   stage.text('Not applied')
                   stage.obtain('#minecraft:planks', 2)
                 })
-              event.edit('pack:basic_metallurgy').title('Must never reach the live registry')
+              event.edit('kubejs:basic_metallurgy').title('Must never reach the live registry')
             })
             ServerEvents.recipes(event => { throw new Error('Must not execute recipes') })
             """;
@@ -35,7 +35,7 @@ final class ScriptCheckSmoke {
             require(result.successful(), "fresh good script and ignored file: " + result.problems());
             require(result.changes().entries().containsKey("check:dry_run"), "new disk script was not evaluated");
             require(registry.getValue(Identifier.parse("check:dry_run")) == null, "dry run added a live entry");
-            require(registry.getValue(Identifier.parse("pack:basic_metallurgy")) == original
+            require(registry.getValue(Identifier.parse("kubejs:basic_metallurgy")) == original
                 && registry.listElements().count() == count, "dry run replaced live holders");
             require(server.getCommands().getDispatcher().execute("kubethaum check", server.createCommandSourceStack()) == 1,
                 "operator command did not succeed");
@@ -59,7 +59,7 @@ final class ScriptCheckSmoke {
                 "fresh syntax error was not found");
             Files.writeString(file, good);
             require(ResearchCheckCommand.check(server).successful(), "fixed file did not pass on repeated check");
-            require(registry.getValue(Identifier.parse("pack:basic_metallurgy")) == original
+            require(registry.getValue(Identifier.parse("kubejs:basic_metallurgy")) == original
                 && registry.listElements().count() == count, "failed checks changed live registry");
         } finally {
             Files.deleteIfExists(file);

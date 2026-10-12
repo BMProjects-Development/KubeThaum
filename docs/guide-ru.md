@@ -2,13 +2,13 @@
 
 [English](guide-en.md) · [Главная](../README.md)
 
-KubeThaum позволяет писать исследования Thaumaturge на JavaScript через KubeJS:
-добавлять записи в таумономикон, создавать вкладки, менять этапы существующих
-исследований и открывать рецепты по мере прохождения.
+Допустим, в сборке золото должно получаться из железа в тигле, но сначала
+игроку нужно изучить металлы. Добавим исследование в таумономикон, зададим
+его требования и откроем рецепт после прохождения.
 
-Начнём с маленького исследования, а затем разберём задачи, из которых можно
-собрать свою ветку прогрессии. Законченный пример с вкладкой, переводами и
-рецептом находится в разделе [«Готовая мастерская»](#готовая-мастерская).
+Начать можно с одного файла. Дальше разберём, как продолжить эту ветку,
+поменять обычную металлургию и собрать свою вкладку. Если нужен сразу готовый
+вариант с переводами, откройте [«Готовую мастерскую»](#готовая-мастерская).
 
 - [Куда класть скрипты](#куда-класть-скрипты)
 - [Первое исследование](#первое-исследование)
@@ -37,14 +37,14 @@ Thaumaturge. Версия 1.1 предназначена для Minecraft 26.1.2
 ```text
 kubejs/
 ├── server_scripts/
-│   └── my_research.js       ← исследования, вкладки и рецепты
+│   └── metallurgy.js       ← исследования, вкладки и рецепты
 └── client_scripts/
-    └── my_research_lang.js  ← переводы для таумономикона
+    └── metallurgy_lang.js  ← переводы для таумономикона
 ```
 
 Создайте отсутствующие папки и обычные файлы с расширением `.js`.
 Названия файлов можете выбирать сами. Следите, чтобы редактор не сохранил
-`my_research.js.txt`. Ничего импортировать в начале скрипта не требуется.
+`metallurgy.js.txt`. Ничего импортировать в начале скрипта не требуется.
 
 Исследования регистрируются в `ThaumaturgeEvents.research`, рецепты — в
 `ServerEvents.recipes`, переводы — в `ClientEvents.lang`. Первые два события
@@ -63,13 +63,13 @@ kubejs/
 
 ## Первое исследование
 
-Создайте `kubejs/server_scripts/my_research.js` и вставьте **весь** пример:
+Создайте `kubejs/server_scripts/metallurgy.js` и вставьте **весь** пример:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.create('pack:first_steps')
+  event.create('kubejs:ironworking')
     .category('thaumaturge:alchemy')
-    .title('Первые опыты')
+    .title('Обработка железа')
     .icon('minecraft:iron_ingot')
     .position(8, 0)
     .stage(stage => {
@@ -82,29 +82,29 @@ ThaumaturgeEvents.research(event => {
 })
 ```
 
-Заново откройте мир и найдите «Первые опыты» во вкладке алхимии.
+Заново откройте мир и найдите «Обработка железа» во вкладке алхимии.
 У записи будет иконка железного слитка и два этапа: сдача железа и итоговый текст.
 Координаты `(8, 0)` выбраны для примера; если запись накладывается на другую,
 переместите её через `position`.
 
 | Строка | Что она задаёт |
 | --- | --- |
-| `create('pack:first_steps')` | Уникальный ID исследования |
+| `create('kubejs:ironworking')` | Уникальный ID исследования |
 | `category('thaumaturge:alchemy')` | Вкладку таумономикона |
-| `title('Первые опыты')` | Название записи |
+| `title('Обработка железа')` | Название записи |
 | `icon('minecraft:iron_ingot')` | Иконку из существующего предмета |
 | `position(8, 0)` | Колонку и строку в дереве; это сетка, не пиксели |
 | `stage(...)` | Следующий этап исследования |
 | `text(...)` | Текст этапа; нужен каждому новому этапу |
 | `obtain(..., 4)` | Требование принести четыре предмета |
 
-`pack` — условное имя вашей сборки, а `first_steps` — имя записи.
-Например, для сборки Aurora можно использовать `aurora:first_steps`.
-Пишите ID строчными латинскими буквами, без пробелов: `aurora:advanced_metals`.
-Во всех ссылках на исследование должен стоять тот же ID.
-Имя файла не определяет ID, а название на экране может быть любым.
+`kubejs:ironworking` — внутреннее имя этого исследования. Его можно оставить
+как есть: `kubejs:` удобно использовать для своих добавлений в сборку.
+Для следующего исследования выберите другое имя, например `kubejs:goldworking`.
+ID пишется строчными латинскими буквами без пробелов. Название в книге
+задаётся через `title` и может быть на русском.
 
-Дальнейшие короткие примеры с `pack:first_steps` предполагают, что эта запись
+Дальнейшие короткие примеры с `kubejs:ironworking` предполагают, что эта запись
 уже создана. Вставляйте изменения после её создания внутри того же обработчика
 либо в отдельный обработчик, выполняющийся позже. При разделении по файлам
 можно использовать имена `00_research.js` и `10_research_edits.js`.
@@ -146,7 +146,7 @@ stage.obtainAny(['minecraft:iron_ingot', 'minecraft:copper_ingot'], 4)
 
 Это **одно** требование на суммарное количество подходящих предметов:
 подойдёт железо, медь или их смесь. В `obtainAny` передавайте ID предметов;
-для тега используйте обычный `obtain('#namespace:tag', amount)`.
+для тега используйте `obtain('#minecraft:planks', 4)`.
 
 ### Предмет с компонентами
 
@@ -201,7 +201,7 @@ stage.warp(1)
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.create('pack:metal_theory')
+  event.create('kubejs:metal_theory')
     .category('thaumaturge:alchemy')
     .title('Теория металлов')
     .icon('minecraft:gold_ingot')
@@ -225,30 +225,32 @@ ThaumaturgeEvents.research(event => {
 
 ## Цепочки исследований
 
-Добавим вторую запись, которая открывается после «Первых опытов».
-Поместите этот блок после создания `pack:first_steps` внутри обработчика:
+Добавим вторую запись, которая открывается после «Обработки железа».
+Поместите этот блок после создания `kubejs:ironworking` внутри обработчика:
 
 ```js
-event.create('pack:advanced_metals')
+event.create('kubejs:goldworking')
   .category('thaumaturge:alchemy')
-  .title('Продвинутые сплавы')
+  .title('Работа с золотом')
   .icon('minecraft:gold_ingot')
   .position(10, 0)
-  .parent('pack:first_steps')
+  .parent('kubejs:ironworking')
   .stage(stage => {
     stage.text('Принесите золотой слиток для следующего опыта.')
     stage.obtain('minecraft:gold_ingot')
   })
-  .stage(stage => stage.text('Исследование сплавов завершено.'))
+  .stage(stage => {
+    stage.text('Теперь можно переходить от железа к опытам с золотом.')
+  })
 ```
 
 `parent(id)` требует полного завершения родителя и создаёт связь на дереве.
 Несколько вызовов требуют **всех** перечисленных родителей.
 Можно ссылаться на записи Thaumaturge, например `thaumaturge:metallurgy`.
 
-Чтобы родитель был только начат, используйте `.parent('pack:first_steps', 1)`.
+Чтобы родитель был только начат, используйте `.parent('kubejs:ironworking', 1)`.
 Номера в `parent(id, stage)` начинаются с **1**: `1` означает начатую запись,
-а не завершённый первый этап. `hiddenParent('pack:first_steps')` задаёт
+а не завершённый первый этап. `hiddenParent('kubejs:ironworking')` задаёт
 зависимость без линии к родителю.
 
 Не делайте взаимную зависимость полного завершения: если A требует B, а B
@@ -261,15 +263,15 @@ event.create('pack:advanced_metals')
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.category('pack:workshop')
+  event.category('kubejs:alchemy_workshop')
     .style('thaumaturge:alchemy')
     .index(30)
     .formula('thaumaturge:ordo', 2)
     .formula('thaumaturge:ignis', 1)
 
-  event.create('pack:workshop_intro')
-    .category('pack:workshop')
-    .title('Добро пожаловать в мастерскую')
+  event.create('kubejs:workshop_tools')
+    .category('kubejs:alchemy_workshop')
+    .title('Инструменты алхимика')
     .icon('minecraft:crafting_table')
     .position(0, 0)
     .stage(stage => {
@@ -288,16 +290,17 @@ ThaumaturgeEvents.research(event => {
 
 ```js
 ClientEvents.lang('ru_ru', event => {
-  event.add('research_category.pack.workshop', 'Мастерская')
+  event.add('research_category.kubejs.alchemy_workshop', 'Алхимическая мастерская')
 })
 
 ClientEvents.lang('en_us', event => {
-  event.add('research_category.pack.workshop', 'Workshop')
+  event.add('research_category.kubejs.alchemy_workshop', 'Alchemy Workshop')
 })
 ```
 
-Ключ имени вкладки строится как `research_category.<namespace>.<path>`.
-У `pack:workshop` это `research_category.pack.workshop`.
+Для вкладки `kubejs:alchemy_workshop` нужен ключ
+`research_category.kubejs.alchemy_workshop`: к ID добавляется
+`research_category.`, а двоеточие заменяется точкой.
 
 Закрыть вкладку до завершения родной металлургии можно, добавив к её цепочке
 `.requireResearch('thaumaturge:metallurgy')`. Исследование, открывающее вкладку,
@@ -316,25 +319,29 @@ ThaumaturgeEvents.research(event => {
 исследовании название и тексты, добавив после его создания:
 
 ```js
-event.edit('pack:first_steps')
-  .title('research.pack.first_steps')
-  .editStage(0, stage => stage.text('research.pack.first_steps.stage.0'))
-  .editStage(1, stage => stage.text('research.pack.first_steps.stage.1'))
+event.edit('kubejs:ironworking')
+  .title('research.kubejs.ironworking')
+  .editStage(0, stage => {
+    stage.text('research.kubejs.ironworking.stage.0')
+  })
+  .editStage(1, stage => {
+    stage.text('research.kubejs.ironworking.stage.1')
+  })
 ```
 
-В `kubejs/client_scripts/my_research_lang.js` добавьте:
+В `kubejs/client_scripts/metallurgy_lang.js` добавьте:
 
 ```js
 ClientEvents.lang('ru_ru', event => {
-  event.add('research.pack.first_steps', 'Первые опыты')
-  event.add('research.pack.first_steps.stage.0', 'Принесите четыре железных слитка.')
-  event.add('research.pack.first_steps.stage.1', 'Первые опыты завершены.')
+  event.add('research.kubejs.ironworking', 'Обработка железа')
+  event.add('research.kubejs.ironworking.stage.0', 'Принесите четыре железных слитка.')
+  event.add('research.kubejs.ironworking.stage.1', 'Теперь можно переходить к опытам с другими металлами.')
 })
 
 ClientEvents.lang('en_us', event => {
-  event.add('research.pack.first_steps', 'First Experiments')
-  event.add('research.pack.first_steps.stage.0', 'Bring four iron ingots.')
-  event.add('research.pack.first_steps.stage.1', 'Your first experiments are complete.')
+  event.add('research.kubejs.ironworking', 'Ironworking')
+  event.add('research.kubejs.ironworking.stage.0', 'Bring four iron ingots.')
+  event.add('research.kubejs.ironworking.stage.1', 'You are ready to experiment with other metals.')
 })
 ```
 
@@ -347,14 +354,14 @@ ClientEvents.lang('en_us', event => {
 У записи в книге и самого рецепта разные задачи:
 
 - `stage.recipe(id)` показывает рецепт на странице.
-- `Thaumaturge.requireResearch(recipe, id)` ограничивает его использование.
+- `.research(...)` у самого рецепта ограничивает его использование.
 
 Полный пример: исследование «Превращение металлов» и рецепт тигля.
 Сохраните как `kubejs/server_scripts/transmutation.js`:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.create('pack:transmutation')
+  event.create('kubejs:metal_transmutation')
     .category('thaumaturge:alchemy')
     .title('Превращение металлов')
     .icon('minecraft:gold_ingot')
@@ -365,48 +372,42 @@ ThaumaturgeEvents.research(event => {
     })
     .stage(stage => {
       stage.text('После завершения исследования этот рецепт будет доступен в тигле.')
-      stage.recipe('pack:gold_transmutation')
+      stage.recipe('kubejs:gold_transmutation')
     })
 })
 
 ServerEvents.recipes(event => {
-  const recipe = event.custom({
-    type: 'thaumaturge:crucible',
-    catalyst: 'minecraft:iron_ingot',
-    aspects: [{ aspect: 'thaumaturge:ordo', amount: 5 }],
-    result: { id: 'minecraft:gold_ingot', count: 1 }
-  }).id('pack:gold_transmutation')
-
-  Thaumaturge.requireResearch(recipe, 'pack:transmutation')
+  event.recipes.thaumaturge.crucible(
+    'minecraft:gold_ingot',
+    'minecraft:iron_ingot',
+    { 'thaumaturge:ordo': 5 }
+  )
+    .id('kubejs:gold_transmutation')
+    .research('kubejs:metal_transmutation')
 })
 ```
 
-У рецепта свой ID, `pack:gold_transmutation`; именно его указывают в
+У рецепта свой ID, `kubejs:gold_transmutation`; именно его указывают в
 `stage.recipe`. Условие использования ссылается на ID **исследования**,
-`pack:transmutation`. До завершения записи рецепт закрыт.
+`kubejs:metal_transmutation`. До завершения записи рецепт закрыт.
 
 Не требуйте в этом исследовании скрафтить предмет по рецепту, который
 открывается только после его полного завершения: получится тупик.
 
-Чтобы разрешить рецепт сразу после начала исследования, используйте третий
-аргумент `0`: `Thaumaturge.requireResearch(recipe, 'pack:transmutation', 0)`.
-Здесь используется родное значение прогресса Thaumaturge, с нуля.
-Для полного завершения **не передавайте** третий аргумент.
+Чтобы разрешить рецепт уже после начала исследования, замените последнюю
+строку на `.research('kubejs:metal_transmutation', 0)`.
+Для открытия после полного прохождения оставьте `.research('kubejs:metal_transmutation')`.
 
-Помощник работает с рецептами Thaumaturge: `arcane_workbench_shaped`,
+Ограничение работает с рецептами Thaumaturge: `arcane_workbench_shaped`,
 `arcane_workbench_shapeless`, `crucible`, `infusion`, `infusion_enchantment`,
 `dust_trigger_simple`, `dust_trigger_tag`, `dust_trigger_multiblock`.
-Он не добавляет ограничения к обычным `minecraft:crafting_shaped` и рецептам
+Оно не добавляет ограничения к обычным `minecraft:crafting_shaped` и рецептам
 сторонних модов. Формат остальных полей рецепта определяется самим Thaumaturge.
 
-Если собираете JSON вручную, эквивалентное поле внутри `event.custom({...})`:
-
-```js
-research: Thaumaturge.gate('pack:transmutation')
-```
-
-`Thaumaturge.gate(id, stage, true)` инвертирует условие прогресса.
-Обычно достаточно `requireResearch`: он также проверяет существование записи.
+Если у вас уже есть рецепт через `event.custom`, старый метод
+`Thaumaturge.requireResearch` тоже работает. Для новых рецептов проще сразу
+дописать `.research(...)`, как выше. Другие рецепты разобраны в
+[отдельном руководстве](recipes-ru.md).
 
 ## Изменение существующих исследований
 
@@ -430,11 +431,12 @@ ThaumaturgeEvents.research(event => {
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.edit('thaumaturge:metallurgy').editStage(0, stage => {
-    stage.text('Для начала соберите четыре медных слитка.')
-    stage.clearObtain()
-    stage.obtain('minecraft:copper_ingot', 4)
-  })
+  event.edit('thaumaturge:metallurgy')
+    .editStage(0, stage => {
+      stage.text('Для начала соберите четыре медных слитка.')
+      stage.clearObtain()
+      stage.obtain('minecraft:copper_ingot', 4)
+    })
 })
 ```
 
@@ -444,7 +446,7 @@ ThaumaturgeEvents.research(event => {
 Изменение структуры этапов — внутри обработчика исследования:
 
 ```js
-event.edit('pack:first_steps')
+event.edit('kubejs:ironworking')
   .insertStage(1, stage => {
     stage.text('Между первым и итоговым этапом подготовьте золотой слиток.')
     stage.obtain('minecraft:gold_ingot')
@@ -466,14 +468,17 @@ event.edit('pack:first_steps')
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.copy('thaumaturge:metallurgy', 'pack:copper_metallurgy')
-    .title('Медная металлургия')
+  event.copy('thaumaturge:metallurgy', 'kubejs:copper_metallurgy')
+    .title('Обработка меди')
     .position(10, 4)
-    .clearIcons().icon('minecraft:copper_ingot')
-    .clearParents().parent('thaumaturge:metallurgy')
+    .clearIcons()
+    .icon('minecraft:copper_ingot')
+    .clearParents()
+    .parent('thaumaturge:metallurgy')
     .editStage(0, stage => {
       stage.text('Начните новый опыт с четырёх медных слитков.')
-      stage.clearObtain().obtain('minecraft:copper_ingot', 4)
+      stage.clearObtain()
+      stage.obtain('minecraft:copper_ingot', 4)
     })
 })
 ```
@@ -511,7 +516,7 @@ ThaumaturgeEvents.research(event => {
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.edit('pack:first_steps').addendum(page => {
+  event.edit('kubejs:ironworking').addendum(page => {
     page.text('После изучения металлургии вы иначе смотрите на первые опыты.')
     page.requireResearch('thaumaturge:metallurgy')
   })
@@ -524,7 +529,7 @@ ThaumaturgeEvents.research(event => {
 У исследования можно поменять форму и иконку:
 
 ```js
-event.edit('pack:first_steps')
+event.edit('kubejs:ironworking')
   .flag('round')
   .clearIcons()
   .icon('minecraft:gold_ingot')
@@ -550,7 +555,7 @@ stage.construct(1, 2, 1, [
 
 Размеры идут как `x, y, z`, число ячеек должно быть ровно `x*y*z`.
 Слои перечисляются сверху вниз; внутри слоя — сначала x, затем z.
-`''` означает пустую ячейку, `#namespace:tag` — тег.
+`''` означает пустую ячейку, `#minecraft:logs` — любой блок из тега брёвен.
 Это схема на странице, а не регистрация нового мультиблока или его рецепта.
 
 ## Готовая мастерская
@@ -567,13 +572,13 @@ stage.construct(1, 2, 1, [
 в `kubejs/server_scripts/`, а
 [workshop_lang.js](../examples/standalone/06_workshop/client_scripts/workshop_lang.js)
 в `kubejs/client_scripts/`. Перезапустите клиент и откройте мир.
-Пример использует namespace `workshop`, поэтому его можно установить рядом
-с учебными скриптами `pack:*` из этого руководства.
+У мастерской свои ID, например `kubejs:workshop_preparation`, поэтому она
+может работать рядом с «Обработкой железа» из начала руководства.
 
 Начните с изменения количества досок и железа. Затем добавьте третье
-исследование с `.parent('workshop:transmutation')` и собственным ID.
-Если захотите переименовать namespace, замените его в ID записей, вкладки,
-рецепта, зависимостях и ключах перевода.
+исследование с `.parent('kubejs:workshop_transmutation')` и собственным ID.
+Если переименуете исследование, поправьте ссылки на него в `parent`,
+`.research(...)` и файле переводов.
 
 Другие готовые скрипты:
 
@@ -609,13 +614,11 @@ stage.construct(1, 2, 1, [
 | Дополнительная страница | `addendum(callback)` |
 | Оформление и доступ вкладки | `style(id)`, `icon(texture)`, `background(texture)`, `overlay(texture)`, `noOverlay()`, `index(n)`, `requireResearch(id)`, `noRequiredResearch()` |
 | Формула вкладки | `formula(aspectId, amount)` |
-| Ограничить рецепт | `Thaumaturge.requireResearch(recipe, researchId[, progress])` |
+| Ограничить рецепт | `.research('kubejs:ironworking')` в цепочке рецепта |
 
-`event.edit(id, research => { ... })` — вариант редактирования через callback.
-Он возвращает `void`; для цепочки методов используйте `event.edit(id)`.
-`get(id)` и `getCategory(id)` возвращают независимый снимок Gson JSON:
-имя читается через `snapshot.get('name').getAsString()`.
-Изменение снимка не меняет запись; для этого нужен `edit`.
+В обычном скрипте достаточно `event.edit('thaumaturge:metallurgy')` и нужных
+методов после него. `get(id)` и `getCategory(id)` служат для чтения копии
+данных; менять исследование нужно через `edit`, вкладку — через `editCategory`.
 
 Создание рецептов, массовая настройка стоимости и бонусы адской печи
 описаны в [руководстве по рецептам 1.1](recipes-ru.md).
@@ -636,10 +639,10 @@ stage.construct(1, 2, 1, [
 команда покажет сообщение примерно такого вида:
 
 ```text
-kubejs/server_scripts/my_research.js:12: Research 'pack:first_steps', stage[0], field 'obtain': Item amount must be positive
+kubejs/server_scripts/metallurgy.js:12: Research 'kubejs:ironworking', stage[0], field 'obtain': Item amount must be positive
 ```
 
-Здесь `my_research.js:12` — файл и строка вызова, `pack:first_steps` — запись,
+Здесь `metallurgy.js:12` — файл и строка вызова, `kubejs:ironworking` — запись,
 `stage[0]` — первый этап, `obtain` — требование, в котором обнаружена проблема.
 Исправьте количество, сохраните файл и снова выполните команду.
 
@@ -686,11 +689,11 @@ kubejs/server_scripts/my_research.js:12: Research 'pack:first_steps', stage[0], 
 | Видны ключи вместо названий | Проверьте `ClientEvents.lang`, язык и наличие клиентского файла |
 | Старые требования остались | Методы добавляют условия; используйте нужный `clear...` перед заменой |
 | Ошибка повторного ID | Не устанавливайте две копии одного примера; для правки используйте `edit` |
-| Рецепт показан, но не закрыт | Добавьте `Thaumaturge.requireResearch` в событии рецептов |
-| Не найден родитель или предмет | Проверьте namespace и ID; наличие мода не гарантирует наличие любого ID |
+| Рецепт показан, но не закрыт | Добавьте `.research(...)` к самому рецепту |
+| Не найден родитель или предмет | Проверьте полный ID и наличие этой записи или предмета в сборке |
 
 Ошибки скриптов ищите в `kubejs/logs/server.log` и `logs/latest.log`.
-Например, `Research 'pack:first_steps', stage[0], field 'obtain'` указывает
+Например, `Research 'kubejs:ironworking', stage[0], field 'obtain'` указывает
 на требование предметов **первого** этапа этой записи.
 Начинайте с одного рабочего примера и добавляйте по одному изменению:
 так проще увидеть, какая строка повлияла на результат.

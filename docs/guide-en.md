@@ -2,13 +2,13 @@
 
 [Русский](guide-ru.md) · [Home](../README.md)
 
-KubeThaum lets you write Thaumaturge research in JavaScript with KubeJS:
-add Thaumonomicon entries, create tabs, change existing stages, and unlock
-recipes as players progress through your research.
+Suppose your pack lets players turn iron into gold in a crucible, after
+they have studied metals. We'll add the research, give it a few requirements,
+and unlock the recipe when the player finishes it.
 
-Start with a small research entry, then use the examples below to build your
-own progression tree. A complete tab with translations and a gated recipe
-is available in [the Workshop example](#the-complete-workshop).
+Start with one file, then add another entry, change built-in Metallurgy,
+or make a separate tab. For a complete version with translations, use
+[the Workshop example](#the-complete-workshop).
 
 - [Where scripts go](#where-scripts-go)
 - [Your first research](#your-first-research)
@@ -37,14 +37,14 @@ Open your Minecraft instance folder. You need two KubeJS directories:
 ```text
 kubejs/
 ├── server_scripts/
-│   └── my_research.js       ← research, tabs, and recipes
+│   └── metallurgy.js       ← research, tabs, and recipes
 └── client_scripts/
-    └── my_research_lang.js  ← Thaumonomicon translations
+    └── metallurgy_lang.js  ← Thaumonomicon translations
 ```
 
 Create any missing folders and plain text files with the `.js` extension.
 You can choose your own filenames. Make sure your editor does not save
-`my_research.js.txt`. No imports are needed at the top of a script.
+`metallurgy.js.txt`. No imports are needed at the top of a script.
 
 Use `ThaumaturgeEvents.research` for research, `ServerEvents.recipes` for
 recipes, and `ClientEvents.lang` for translations. The first two belong
@@ -62,13 +62,13 @@ to check the saved research scripts without applying their changes.
 
 ## Your first research
 
-Create `kubejs/server_scripts/my_research.js` and paste the **entire** example:
+Create `kubejs/server_scripts/metallurgy.js` and paste the **entire** example:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.create('pack:first_steps')
+  event.create('kubejs:ironworking')
     .category('thaumaturge:alchemy')
-    .title('First Experiments')
+    .title('Ironworking')
     .icon('minecraft:iron_ingot')
     .position(8, 0)
     .stage(stage => {
@@ -81,29 +81,28 @@ ThaumaturgeEvents.research(event => {
 })
 ```
 
-Reopen the world and find First Experiments in the Alchemy tab.
+Reopen the world and find Ironworking in the Alchemy tab.
 The entry has an iron ingot icon and two stages: handing in iron and a
 concluding page. Coordinates `(8, 0)` are an example; if the entry overlaps
 another one, move it with `position`.
 
 | Line | What it controls |
 | --- | --- |
-| `create('pack:first_steps')` | The unique research ID |
+| `create('kubejs:ironworking')` | The unique research ID |
 | `category('thaumaturge:alchemy')` | The Thaumonomicon tab |
-| `title('First Experiments')` | The entry's name |
+| `title('Ironworking')` | The entry's name |
 | `icon('minecraft:iron_ingot')` | An icon using an existing item |
 | `position(8, 0)` | Column and row on the research grid, not pixels |
 | `stage(...)` | The next research stage |
 | `text(...)` | Stage text; every new stage needs it |
 | `obtain(..., 4)` | A requirement to bring four items |
 
-`pack` is a placeholder namespace for your modpack, and `first_steps` is
-the entry's name. An Aurora pack could use `aurora:first_steps`.
-Use lowercase Latin characters and no spaces: `aurora:advanced_metals`.
-Every reference to an entry must use the same ID.
-The script filename does not determine the ID; the displayed title is independent.
+`kubejs:ironworking` is this entry's internal name. You can leave it as it is:
+`kubejs:` is a convenient prefix for your pack's additions. Give the next
+entry a different name, such as `kubejs:goldworking`. IDs use lowercase Latin
+letters and no spaces. The name players see in the book comes from `title`.
 
-Later snippets using `pack:first_steps` assume you have created this entry.
+Later snippets using `kubejs:ironworking` assume you have created this entry.
 Place edits after its creation in the same handler, or in another handler
 that runs later. When splitting scripts into files, filenames such as
 `00_research.js` and `10_research_edits.js` help make the order explicit.
@@ -145,7 +144,7 @@ stage.obtainAny(['minecraft:iron_ingot', 'minecraft:copper_ingot'], 4)
 
 This creates **one** requirement for a total of four matching items:
 iron, copper, or a mixture. Pass direct item IDs to `obtainAny`;
-use `obtain('#namespace:tag', amount)` for a tag.
+use `obtain('#minecraft:planks', 4)` for a tag.
 
 ### Require item components
 
@@ -200,7 +199,7 @@ Configure `noteAspect` and `complexity` for research that uses notes:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.create('pack:metal_theory')
+  event.create('kubejs:metal_theory')
     .category('thaumaturge:alchemy')
     .title('Theory of Metals')
     .icon('minecraft:gold_ingot')
@@ -224,21 +223,23 @@ stage is completed; omit it when you do not want that effect.
 
 ## Research chains
 
-Add a second entry that opens after First Experiments.
-Place this block after creating `pack:first_steps`, inside the research handler:
+Add a second entry that opens after Ironworking.
+Place this block after creating `kubejs:ironworking`, inside the research handler:
 
 ```js
-event.create('pack:advanced_metals')
+event.create('kubejs:goldworking')
   .category('thaumaturge:alchemy')
-  .title('Advanced Alloys')
+  .title('Working with Gold')
   .icon('minecraft:gold_ingot')
   .position(10, 0)
-  .parent('pack:first_steps')
+  .parent('kubejs:ironworking')
   .stage(stage => {
     stage.text('Bring a gold ingot for the next experiment.')
     stage.obtain('minecraft:gold_ingot')
   })
-  .stage(stage => stage.text('Your alloy research is complete.'))
+  .stage(stage => {
+    stage.text('You are ready to move from iron to experiments with gold.')
+  })
 ```
 
 `parent(id)` requires full completion of the parent and creates a tree link.
@@ -246,9 +247,9 @@ Several calls require **all** listed parents. You can reference built-in
 Thaumaturge research, such as `thaumaturge:metallurgy`.
 
 To require only that the parent has been started, use
-`.parent('pack:first_steps', 1)`. Parent stage numbers start at **1**:
+`.parent('kubejs:ironworking', 1)`. Parent stage numbers start at **1**:
 `1` means started, rather than the first stage being completed.
-`hiddenParent('pack:first_steps')` adds a dependency without drawing a parent line.
+`hiddenParent('kubejs:ironworking')` adds a dependency without drawing a parent line.
 
 Avoid circular completion dependencies. If A requires B and B requires A,
 players cannot complete either entry.
@@ -260,15 +261,15 @@ This example is self-contained. Save it as
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.category('pack:workshop')
+  event.category('kubejs:alchemy_workshop')
     .style('thaumaturge:alchemy')
     .index(30)
     .formula('thaumaturge:ordo', 2)
     .formula('thaumaturge:ignis', 1)
 
-  event.create('pack:workshop_intro')
-    .category('pack:workshop')
-    .title('Welcome to the Workshop')
+  event.create('kubejs:workshop_tools')
+    .category('kubejs:alchemy_workshop')
+    .title('Alchemy Tools')
     .icon('minecraft:crafting_table')
     .position(0, 0)
     .stage(stage => {
@@ -287,16 +288,17 @@ For the tab name, create `kubejs/client_scripts/workshop_lang.js`:
 
 ```js
 ClientEvents.lang('ru_ru', event => {
-  event.add('research_category.pack.workshop', 'Мастерская')
+  event.add('research_category.kubejs.alchemy_workshop', 'Алхимическая мастерская')
 })
 
 ClientEvents.lang('en_us', event => {
-  event.add('research_category.pack.workshop', 'Workshop')
+  event.add('research_category.kubejs.alchemy_workshop', 'Alchemy Workshop')
 })
 ```
 
-Tab names use `research_category.<namespace>.<path>`.
-For `pack:workshop`, the key is `research_category.pack.workshop`.
+The tab `kubejs:alchemy_workshop` needs the translation key
+`research_category.kubejs.alchemy_workshop`: add `research_category.` before
+the ID and replace the colon with a dot.
 
 To keep the tab locked until Metallurgy is complete, add
 `.requireResearch('thaumaturge:metallurgy')` to the category chain.
@@ -316,25 +318,29 @@ For multiple languages, use translation keys. Add this after creating
 your first entry to change its name and stage text:
 
 ```js
-event.edit('pack:first_steps')
-  .title('research.pack.first_steps')
-  .editStage(0, stage => stage.text('research.pack.first_steps.stage.0'))
-  .editStage(1, stage => stage.text('research.pack.first_steps.stage.1'))
+event.edit('kubejs:ironworking')
+  .title('research.kubejs.ironworking')
+  .editStage(0, stage => {
+    stage.text('research.kubejs.ironworking.stage.0')
+  })
+  .editStage(1, stage => {
+    stage.text('research.kubejs.ironworking.stage.1')
+  })
 ```
 
-Add the translations to `kubejs/client_scripts/my_research_lang.js`:
+Add the translations to `kubejs/client_scripts/metallurgy_lang.js`:
 
 ```js
 ClientEvents.lang('ru_ru', event => {
-  event.add('research.pack.first_steps', 'Первые опыты')
-  event.add('research.pack.first_steps.stage.0', 'Принесите четыре железных слитка.')
-  event.add('research.pack.first_steps.stage.1', 'Первые опыты завершены.')
+  event.add('research.kubejs.ironworking', 'Обработка железа')
+  event.add('research.kubejs.ironworking.stage.0', 'Принесите четыре железных слитка.')
+  event.add('research.kubejs.ironworking.stage.1', 'Теперь можно переходить к опытам с другими металлами.')
 })
 
 ClientEvents.lang('en_us', event => {
-  event.add('research.pack.first_steps', 'First Experiments')
-  event.add('research.pack.first_steps.stage.0', 'Bring four iron ingots.')
-  event.add('research.pack.first_steps.stage.1', 'Your first experiments are complete.')
+  event.add('research.kubejs.ironworking', 'Ironworking')
+  event.add('research.kubejs.ironworking.stage.0', 'Bring four iron ingots.')
+  event.add('research.kubejs.ironworking.stage.1', 'You are ready to experiment with other metals.')
 })
 ```
 
@@ -347,14 +353,14 @@ check the game language and the client's translation file.
 The book page and the actual recipe have different roles:
 
 - `stage.recipe(id)` displays a recipe on the page.
-- `Thaumaturge.requireResearch(recipe, id)` restricts using the recipe.
+- `.research(...)` on the recipe itself restricts using it.
 
 This complete example adds Metal Transmutation and a crucible recipe.
 Save it as `kubejs/server_scripts/transmutation.js`:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.create('pack:transmutation')
+  event.create('kubejs:metal_transmutation')
     .category('thaumaturge:alchemy')
     .title('Metal Transmutation')
     .icon('minecraft:gold_ingot')
@@ -365,48 +371,42 @@ ThaumaturgeEvents.research(event => {
     })
     .stage(stage => {
       stage.text('Complete this research to unlock the following crucible recipe.')
-      stage.recipe('pack:gold_transmutation')
+      stage.recipe('kubejs:gold_transmutation')
     })
 })
 
 ServerEvents.recipes(event => {
-  const recipe = event.custom({
-    type: 'thaumaturge:crucible',
-    catalyst: 'minecraft:iron_ingot',
-    aspects: [{ aspect: 'thaumaturge:ordo', amount: 5 }],
-    result: { id: 'minecraft:gold_ingot', count: 1 }
-  }).id('pack:gold_transmutation')
-
-  Thaumaturge.requireResearch(recipe, 'pack:transmutation')
+  event.recipes.thaumaturge.crucible(
+    'minecraft:gold_ingot',
+    'minecraft:iron_ingot',
+    { 'thaumaturge:ordo': 5 }
+  )
+    .id('kubejs:gold_transmutation')
+    .research('kubejs:metal_transmutation')
 })
 ```
 
-The recipe has its own ID, `pack:gold_transmutation`; use that in
+The recipe has its own ID, `kubejs:gold_transmutation`; use that in
 `stage.recipe`. The crafting condition references the **research** ID,
-`pack:transmutation`. Until the entry is complete, this recipe is locked.
+`kubejs:metal_transmutation`. Until the entry is complete, this recipe is locked.
 
 Do not require crafting an item using a recipe that only unlocks after
 this same research is complete: that creates a progression dead end.
 
-To unlock a recipe as soon as research has been started, pass `0` as
-the third argument: `Thaumaturge.requireResearch(recipe, 'pack:transmutation', 0)`.
-This uses Thaumaturge's native progress value, starting at zero.
-For full completion, **omit** the third argument.
+To unlock the recipe when the player starts the entry, change the last line
+to `.research('kubejs:metal_transmutation', 0)`. To require full completion,
+leave it as `.research('kubejs:metal_transmutation')`.
 
-The helper supports Thaumaturge's `arcane_workbench_shaped`,
+Research gates support Thaumaturge's `arcane_workbench_shaped`,
 `arcane_workbench_shapeless`, `crucible`, `infusion`, `infusion_enchantment`,
 `dust_trigger_simple`, `dust_trigger_tag`, and `dust_trigger_multiblock` recipes.
-It does not gate ordinary `minecraft:crafting_shaped` or other mods' recipes.
+They do not lock ordinary `minecraft:crafting_shaped` or other mods' recipes.
 Thaumaturge defines the format of the remaining recipe fields.
 
-When writing JSON manually, the equivalent field inside `event.custom({...})` is:
-
-```js
-research: Thaumaturge.gate('pack:transmutation')
-```
-
-`Thaumaturge.gate(id, stage, true)` inverts a progress condition.
-Usually `requireResearch` is sufficient; it also checks that the entry exists.
+If you already have a recipe written with `event.custom`, the existing
+`Thaumaturge.requireResearch` helper still works. For new recipes, adding
+`.research(...)` directly is easier. More recipes are covered in the
+[recipe guide](recipes-en.md).
 
 ## Editing existing research
 
@@ -430,11 +430,12 @@ To replace only the items players must bring, clear those requirements first:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.edit('thaumaturge:metallurgy').editStage(0, stage => {
-    stage.text('Begin by gathering four copper ingots.')
-    stage.clearObtain()
-    stage.obtain('minecraft:copper_ingot', 4)
-  })
+  event.edit('thaumaturge:metallurgy')
+    .editStage(0, stage => {
+      stage.text('Begin by gathering four copper ingots.')
+      stage.clearObtain()
+      stage.obtain('minecraft:copper_ingot', 4)
+    })
 })
 ```
 
@@ -445,7 +446,7 @@ Use `clearCraft`, `clearRequiredResearch`, `clearRequiredKnowledge`, and
 To change the stage structure, inside the research handler:
 
 ```js
-event.edit('pack:first_steps')
+event.edit('kubejs:ironworking')
   .insertStage(1, stage => {
     stage.text('Between the first stage and the conclusion, prepare a gold ingot.')
     stage.obtain('minecraft:gold_ingot')
@@ -467,14 +468,17 @@ Use `copy` to make a variant of an existing entry:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.copy('thaumaturge:metallurgy', 'pack:copper_metallurgy')
-    .title('Copper Metallurgy')
+  event.copy('thaumaturge:metallurgy', 'kubejs:copper_metallurgy')
+    .title('Copperworking')
     .position(10, 4)
-    .clearIcons().icon('minecraft:copper_ingot')
-    .clearParents().parent('thaumaturge:metallurgy')
+    .clearIcons()
+    .icon('minecraft:copper_ingot')
+    .clearParents()
+    .parent('thaumaturge:metallurgy')
     .editStage(0, stage => {
       stage.text('Start a new experiment with four copper ingots.')
-      stage.clearObtain().obtain('minecraft:copper_ingot', 4)
+      stage.clearObtain()
+      stage.obtain('minecraft:copper_ingot', 4)
     })
 })
 ```
@@ -512,7 +516,7 @@ of another entry, which is useful for text revealed later:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.edit('pack:first_steps').addendum(page => {
+  event.edit('kubejs:ironworking').addendum(page => {
     page.text('Metallurgy has given you a new perspective on your first experiments.')
     page.requireResearch('thaumaturge:metallurgy')
   })
@@ -525,7 +529,7 @@ Addenda also support `recipe(id)` to display recipes.
 To change a research entry's shape and icon:
 
 ```js
-event.edit('pack:first_steps')
+event.edit('kubejs:ironworking')
   .flag('round')
   .clearIcons()
   .icon('minecraft:gold_ingot')
@@ -551,7 +555,7 @@ stage.construct(1, 2, 1, [
 
 Dimensions are `x, y, z`, and the list must contain exactly `x*y*z` cells.
 List layers from top to bottom; within a layer, x comes first, then z.
-`''` means an empty cell, and `#namespace:tag` means a tag.
+`''` means an empty cell; `#minecraft:logs` accepts any block in the logs tag.
 This displays a diagram; it does not register a new multiblock or its recipe.
 
 ## The complete Workshop
@@ -568,13 +572,13 @@ Copy [workshop.js](../examples/standalone/06_workshop/server_scripts/workshop.js
 to `kubejs/server_scripts/` and
 [workshop_lang.js](../examples/standalone/06_workshop/client_scripts/workshop_lang.js)
 to `kubejs/client_scripts/`. Restart the client and open your world.
-This example uses the `workshop` namespace, so it can coexist with the
-`pack:*` tutorial scripts in this guide.
+The Workshop has its own IDs, such as `kubejs:workshop_preparation`, so it
+can run alongside Ironworking from the start of this guide.
 
 Start by changing the quantities of planks and iron. Then add a third
-entry with `.parent('workshop:transmutation')` and its own ID.
-If you rename the namespace, update entry IDs, the tab, recipe,
-dependencies, and translation keys together.
+entry with `.parent('kubejs:workshop_transmutation')` and its own ID.
+If you rename an entry, update references to it in `parent`, `.research(...)`,
+and the translation file as well.
 
 Other ready-to-use scripts:
 
@@ -610,13 +614,11 @@ folders into KubeJS's matching folders. The `examples` folder itself is not exec
 | Additional page | `addendum(callback)` |
 | Tab appearance and access | `style(id)`, `icon(texture)`, `background(texture)`, `overlay(texture)`, `noOverlay()`, `index(n)`, `requireResearch(id)`, `noRequiredResearch()` |
 | Tab formula | `formula(aspectId, amount)` |
-| Gate a recipe | `Thaumaturge.requireResearch(recipe, researchId[, progress])` |
+| Gate a recipe | `.research('kubejs:ironworking')` in the recipe chain |
 
-`event.edit(id, research => { ... })` is the callback editing form.
-It returns `void`; use `event.edit(id)` for method chaining.
-`get(id)` and `getCategory(id)` return detached Gson JSON snapshots:
-read the name with `snapshot.get('name').getAsString()`.
-Changing a snapshot does not change the entry; use `edit` instead.
+For ordinary edits, use `event.edit('thaumaturge:metallurgy')` followed by
+the methods you need. `get(id)` and `getCategory(id)` read copies of the
+data; use `edit` to change an entry and `editCategory` to change a tab.
 
 For recipe creation, bulk balancing, and infernal furnace bonuses, see
 the [recipe guide for 1.1](recipes-en.md).
@@ -638,10 +640,10 @@ For example, accidentally writing `stage.obtain('minecraft:iron_ingot', 0)`
 produces a message similar to:
 
 ```text
-kubejs/server_scripts/my_research.js:12: Research 'pack:first_steps', stage[0], field 'obtain': Item amount must be positive
+kubejs/server_scripts/metallurgy.js:12: Research 'kubejs:ironworking', stage[0], field 'obtain': Item amount must be positive
 ```
 
-`my_research.js:12` identifies the file and call line, `pack:first_steps`
+`metallurgy.js:12` identifies the file and call line, `kubejs:ironworking`
 identifies the entry, `stage[0]` is its first stage, and `obtain` is the
 invalid requirement. Fix the amount, save the file, and run the command again.
 
@@ -687,11 +689,11 @@ the limits are 256 files, 256 KiB per file, and 4 MiB in total.
 | Translation keys appear as text | Check `ClientEvents.lang`, game language, and the client file |
 | Old requirements remain | Methods append requirements; use the matching `clear...` method first |
 | Duplicate ID error | Do not install two copies of one example; use `edit` to change an entry |
-| A recipe is displayed but not locked | Add `Thaumaturge.requireResearch` in the recipe event |
-| A parent or item cannot be found | Check its namespace and ID; installing a mod does not guarantee a particular ID exists |
+| A recipe is displayed but not locked | Add `.research(...)` to the recipe itself |
+| A parent or item cannot be found | Check its full ID and whether this entry or item exists in the pack |
 
 Look for script errors in `kubejs/logs/server.log` and `logs/latest.log`.
-For example, `Research 'pack:first_steps', stage[0], field 'obtain'` points
+For example, `Research 'kubejs:ironworking', stage[0], field 'obtain'` points
 to the item requirement on this entry's **first** stage.
 Start with one working example and make one change at a time, so you can
 see which line affected the result.
