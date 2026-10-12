@@ -105,7 +105,17 @@ tasks.register('verifyScriptCheck', JavaExec) {
     mainClass = 'org.bmp.kubethaum.ScriptCheckVerification'
     enableAssertions = true
 }
-tasks.named('check') { dependsOn 'verifyResearch', 'verifyCompatibility', 'verifyScriptCheck' }
+def releaseNotes = layout.projectDirectory.file("changelogs/${mod_version}.md")
+tasks.register('verifyReleaseNotes') {
+    doLast {
+        def notes = releaseNotes.asFile
+        if (!notes.isFile() || notes.getText('UTF-8').trim().isEmpty()) {
+            throw new GradleException("Add release notes in ${notes.name} under changelogs/")
+        }
+    }
+}
+
+tasks.named('check') { dependsOn 'verifyResearch', 'verifyCompatibility', 'verifyScriptCheck', 'verifyReleaseNotes' }
 tasks.named('sourcesJar') { from sourceSets.compat.allSource }
 tasks.named('test') { enabled = false } // Checks use verifyResearch and the actual GameTest server.
 
@@ -117,13 +127,13 @@ def prepareSmokeScripts = tasks.register('prepareSmokeScripts', Copy) {
 }
 
 tasks.register('releaseZip', Zip) {
-    dependsOn tasks.named('jar')
+    dependsOn tasks.named('jar'), tasks.named('verifyReleaseNotes')
     archiveFileName = "KubeThaum-${mod_version}.zip"
     destinationDirectory = layout.buildDirectory.dir('distributions')
     from(tasks.named('jar')) { into 'mods' }
     from('examples') { into 'examples' }
     from('README.md')
-    from('CHANGELOG.md')
+    from('changelogs') { into 'changelogs' }
     from('docs') { into 'docs' }
 }
 

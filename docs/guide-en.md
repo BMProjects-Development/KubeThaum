@@ -1,6 +1,6 @@
 # KubeThaum: creating your own research
 
-[Русский](guide-ru.md) · [Home](../README.md)
+[Русский](guide-ru.md) · [Recipes](recipes-en.md) · [Home](../README.md)
 
 Suppose your pack lets players turn iron into gold in a crucible, after
 they have studied metals. We'll add the research, give it a few requirements,
@@ -9,6 +9,9 @@ and unlock the recipe when the player finishes it.
 Start with one file, then add another entry, change built-in Metallurgy,
 or make a separate tab. For a complete version with translations, use
 [the Workshop example](#the-complete-workshop).
+
+<details>
+<summary>Contents</summary>
 
 - [Where scripts go](#where-scripts-go)
 - [Your first research](#your-first-research)
@@ -25,11 +28,12 @@ or make a separate tab. For a complete version with translations, use
 - [Checking scripts with a command](#checking-scripts-with-a-command)
 - [When something does not appear](#when-something-does-not-appear)
 
+</details>
+
 ## Where scripts go
 
 Install KubeThaum alongside Thaumaturge, KubeJS, Rhino, and Thaumaturge's
-dependencies. Version 1.1 targets Minecraft 26.1.2, NeoForge 26.1.2.109 and
-later within 26.1.2, KubeJS 26.1.2-8.0.6, and Thaumaturge 1.0.2.
+dependencies.
 KubeThaum does not add research until you install scripts.
 
 Open your Minecraft instance folder. You need two KubeJS directories:
@@ -52,10 +56,12 @@ in `server_scripts`; the third belongs in `client_scripts`.
 For multiplayer, install research and recipe scripts on the server and
 include translation scripts in each player's client pack.
 
-**Close and reopen the world after changing research**, or restart your
-dedicated server. `/reload` updates recipes but does not reload research.
-After changing translations, reload client resources with F3+T; restart
-the client when adding a new client script.
+| What changed | How to apply it |
+| --- | --- |
+| Research and tabs | Reopen the world or restart the dedicated server |
+| Recipes | Run `/reload` |
+| Text in an existing client script | Reload resources with F3+T |
+| A new client script | Restart the client |
 
 Before reopening the world, run [`/kubethaum check`](#checking-scripts-with-a-command)
 to check the saved research scripts without applying their changes.
@@ -163,8 +169,8 @@ stage.text('Craft a crafting table.')
 stage.craft('minecraft:crafting_table')
 ```
 
-`craft` uses Thaumaturge's native requirement handling. In Thaumaturge 1.0.2,
-a recorded craft counts; holding a matching item can also satisfy the condition.
+`craft` uses Thaumaturge's native requirement handling. A recorded craft counts;
+holding a matching item can also satisfy the condition.
 It is not a counter for “craft N items after starting this stage.”
 Use `obtain` when you need players to hand in an exact quantity.
 Alternatives use `craftAny(['minecraft:chest', 'minecraft:barrel'], 1)`.
@@ -192,7 +198,7 @@ stage.warp(1)
 The knowledge types are `theory` and `observation`. Amounts use raw points:
 32 points make one theory, and 16 points make one observation.
 
-In Thaumaturge 1.0.2, theory requirements use research notes, while
+Theory requirements use research notes, while
 observation requirements use the native aspect cost handling.
 Do not assume they simply subtract the specified number from a knowledge bar.
 Configure `noteAspect` and `complexity` for research that uses notes:
@@ -621,7 +627,7 @@ the methods you need. `get(id)` and `getCategory(id)` read copies of the
 data; use `edit` to change an entry and `editCategory` to change a tab.
 
 For recipe creation, bulk balancing, and infernal furnace bonuses, see
-the [recipe guide for 1.1](recipes-en.md).
+the [recipe guide](recipes-en.md).
 
 ## Checking scripts with a command
 
@@ -646,6 +652,9 @@ kubejs/server_scripts/metallurgy.js:12: Research 'kubejs:ironworking', stage[0],
 `metallurgy.js:12` identifies the file and call line, `kubejs:ironworking`
 identifies the entry, `stage[0]` is its first stage, and `obtain` is the
 invalid requirement. Fix the amount, save the file, and run the command again.
+
+<details>
+<summary>What it checks and where its limits are</summary>
 
 The command checks:
 
@@ -679,6 +688,8 @@ A successful result therefore means “no errors in the checked scope,”
 rather than validation of the entire pack. Execution has instruction and
 time limits to stop loops. Very large script sets are not supported:
 the limits are 256 files, 256 KiB per file, and 4 MiB in total.
+
+</details>
 
 ## When something does not appear
 

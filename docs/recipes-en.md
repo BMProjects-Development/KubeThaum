@@ -1,4 +1,4 @@
-# KubeThaum 1.1: recipes for your modpack
+# KubeThaum: recipes for your modpack
 
 [Русский](recipes-ru.md) · [Research guide](guide-en.md) · [Home](../README.md)
 
@@ -10,6 +10,19 @@ You can have several `ServerEvents.recipes` handlers in one file.
 Save the file and run `/reload`. If you also added research, reopen the world:
 research updates when the world loads. A complete file with all eight recipe
 types is available in [07_recipes](../examples/standalone/07_recipes/server_scripts/recipes.js).
+
+<details>
+<summary>Contents</summary>
+
+- [Gold from iron in the crucible](#gold-from-iron-in-the-crucible)
+- [Gold at the arcane workbench](#gold-at-the-arcane-workbench)
+- [A diamond through infusion](#a-diamond-through-infusion)
+- [Transforming blocks with Salis Mundus](#transforming-blocks-with-salis-mundus)
+- [Changing an existing recipe](#changing-an-existing-recipe)
+- [Infernal furnace bonuses](#infernal-furnace-bonuses)
+- [Reference and checking](#reference-and-checking)
+
+</details>
 
 ## Gold from iron in the crucible
 

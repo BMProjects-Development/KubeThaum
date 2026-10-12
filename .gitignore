@@ -13,6 +13,7 @@ logs/
 .tools/
 run-gametest/
 output/
+__pycache__/
 
 .eclipse
 .settings
