@@ -122,8 +122,8 @@ tasks.register('releaseZip', Zip) {
     destinationDirectory = layout.buildDirectory.dir('distributions')
     from(tasks.named('jar')) { into 'mods' }
     from('examples') { into 'examples' }
-    from('types') { into 'types' }
     from('README.md')
+    from('CHANGELOG.md')
     from('docs') { into 'docs' }
 }
 

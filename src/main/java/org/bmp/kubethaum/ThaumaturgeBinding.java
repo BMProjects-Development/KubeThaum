@@ -7,12 +7,25 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import java.util.Set;
 import org.bmp.kubethaum.research.ResearchJson;
+import dev.latvian.mods.kubejs.generator.KubeDataGenerator;
+import org.bmp.kubethaum.recipe.InfernalBonuses;
 
 public final class ThaumaturgeBinding {
     private static final Set<String> GATED_RECIPES = Set.of("thaumaturge:arcane_workbench_shaped", "thaumaturge:arcane_workbench_shapeless",
         "thaumaturge:crucible", "thaumaturge:infusion", "thaumaturge:infusion_enchantment",
         "thaumaturge:dust_trigger_simple", "thaumaturge:dust_trigger_tag", "thaumaturge:dust_trigger_multiblock");
     private ThaumaturgeBinding() {}
+
+    /** Use in ServerEvents.generateData('after_mods', ...). Input is the smelted item, not its result. */
+    public static void infernalBonus(KubeDataGenerator data, String input, String output, int count, float chance) {
+        InfernalBonuses.write(data, input, output, count, chance, false);
+    }
+    public static void replaceInfernalBonus(KubeDataGenerator data, String input, String output, int count, float chance) {
+        InfernalBonuses.write(data, input, output, count, chance, true);
+    }
+    public static void removeInfernalBonus(KubeDataGenerator data, String input) {
+        InfernalBonuses.remove(data, input);
+    }
 
     public static JsonObject gate(String entry) { return ResearchJson.gate(entry, null, false); }
     public static JsonObject gate(String entry, int stage) { return ResearchJson.gate(entry, stage, false); }
@@ -31,8 +44,13 @@ public final class ThaumaturgeBinding {
         if (gate.has("stage") && gate.get("stage").getAsInt() > entry.stages().size()) {
             throw new IllegalArgumentException("Recipe gate stage exceeds " + entry.stages().size() + " stages of '" + entryId + "'");
         }
-        recipe.json.add("research", gate);
-        recipe.save();
+        var key = recipe.type.schemaType.schema.getOptionalKey("research");
+        if (key == null) {
+            recipe.json.add("research", gate);
+            recipe.save();
+        } else {
+            recipe.setValue(key, key.codec.parse(recipe.type.event.ops.json(), gate).getOrThrow());
+        }
         return recipe;
     }
 }

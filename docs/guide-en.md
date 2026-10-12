@@ -28,7 +28,7 @@ is available in [the Workshop example](#the-complete-workshop).
 ## Where scripts go
 
 Install KubeThaum alongside Thaumaturge, KubeJS, Rhino, and Thaumaturge's
-dependencies. Version 1.0 targets Minecraft 26.1.2, NeoForge 26.1.2.109 and
+dependencies. Version 1.1 targets Minecraft 26.1.2, NeoForge 26.1.2.109 and
 later within 26.1.2, KubeJS 26.1.2-8.0.6, and Thaumaturge 1.0.2.
 KubeThaum does not add research until you install scripts.
 
@@ -618,12 +618,8 @@ It returns `void`; use `event.edit(id)` for method chaining.
 read the name with `snapshot.get('name').getAsString()`.
 Changing a snapshot does not change the entry; use `edit` instead.
 
-For editor autocomplete, copy [kubethaum.d.ts](../types/kubethaum.d.ts)
-and [globals.d.ts](../types/globals.d.ts) to `kubejs/types/`, and the
-[jsconfig template](../types/jsconfig.example.json) to `kubejs/jsconfig.json`.
-For an existing configuration, add `types/**/*.d.ts` to `include`.
-The game does not need these files. If another declaration set already
-defines `ThaumaturgeEvents` and `Thaumaturge`, do not include `globals.d.ts` again.
+For recipe creation, bulk balancing, and infernal furnace bonuses, see
+the [recipe guide for 1.1](recipes-en.md).
 
 ## Checking scripts with a command
 

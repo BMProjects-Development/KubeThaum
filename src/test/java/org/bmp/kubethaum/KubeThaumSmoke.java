@@ -40,7 +40,7 @@ public final class KubeThaumSmoke extends GameTestInstance {
     @SubscribeEvent public static void register(RegisterGameTestsEvent event) {
         if (!Boolean.getBoolean("kubethaum.smokeTest")) return;
         var environment = event.registerEnvironment(Identifier.parse("kubethaum:smoke"), new TestEnvironmentDefinition.AllOf(List.of()));
-        var data = new TestData<>(environment, Identifier.parse("thaumaturge:empty_5x5x7"), 40, 0, true, Rotation.NONE);
+        var data = new TestData<>(environment, Identifier.parse("thaumaturge:empty_5x5x7"), 1200, 0, true, Rotation.NONE);
         event.registerTest(Identifier.parse("kubethaum:scripted_research"), new KubeThaumSmoke(data));
     }
 
@@ -112,9 +112,19 @@ public final class KubeThaumSmoke extends GameTestInstance {
                 helper.fail("Native network codec lost scripted progress"); return;
             }
         } finally { buffer.release(); }
-        try { ScriptCheckSmoke.verify(helper.getLevel().getServer()); }
+        try {
+            RecipeSmoke.verify(helper.getLevel().getServer());
+            ScriptCheckSmoke.verify(helper.getLevel().getServer());
+        }
         catch (Exception | AssertionError error) { helper.fail(error.getMessage()); return; }
-        helper.succeed();
+        var server = helper.getLevel().getServer();
+        var reload = server.reloadResources(server.getPackRepository().getSelectedIds());
+        helper.succeedWhen(() -> {
+            helper.assertTrue(reload.isDone(), "Waiting for recipe/data-map reload");
+            reload.join();
+            try { RecipeSmoke.verify(server); }
+            catch (AssertionError error) { helper.fail(error.getMessage()); }
+        });
     }
     @Override public MapCodec<? extends GameTestInstance> codec() { return MapCodec.unit(this); }
     @Override protected MutableComponent typeDescription() { return Component.literal("kubethaum:smoke"); }

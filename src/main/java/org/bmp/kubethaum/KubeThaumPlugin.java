@@ -8,8 +8,20 @@ import dev.latvian.mods.kubejs.event.EventGroupRegistry;
 import dev.latvian.mods.kubejs.plugin.KubeJSPlugin;
 import dev.latvian.mods.kubejs.registry.ServerRegistryRegistry;
 import dev.latvian.mods.kubejs.script.BindingRegistry;
+import dev.latvian.mods.kubejs.recipe.component.RecipeComponentTypeRegistry;
+import dev.latvian.mods.kubejs.recipe.schema.RecipeFactoryRegistry;
+import dev.latvian.mods.kubejs.recipe.schema.RecipeSchemaRegistry;
+import org.bmp.kubethaum.recipe.ThaumaturgeRecipes;
 
 public final class KubeThaumPlugin implements KubeJSPlugin {
+    @Override public void registerRecipeComponents(RecipeComponentTypeRegistry registry) {
+        registry.unit(ThaumaturgeRecipes.ASPECTS);
+        registry.unit(ThaumaturgeRecipes.CRYSTALS);
+        registry.unit(ThaumaturgeRecipes.GATE);
+        registry.unit(ThaumaturgeRecipes.ENCHANTMENT);
+    }
+    @Override public void registerRecipeFactories(RecipeFactoryRegistry registry) { registry.register(ThaumaturgeRecipes.FACTORY); }
+    @Override public void registerRecipeSchemas(RecipeSchemaRegistry registry) { ThaumaturgeRecipes.register(registry); }
     @Override public void registerEvents(EventGroupRegistry registry) { registry.register(ThaumaturgeEvents.GROUP); }
     @Override public void registerBindings(BindingRegistry bindings) { bindings.add("Thaumaturge", ThaumaturgeBinding.class); }
     @Override public void registerServerRegistries(ServerRegistryRegistry registry) {

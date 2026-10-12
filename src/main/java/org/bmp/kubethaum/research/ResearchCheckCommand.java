@@ -122,7 +122,7 @@ public final class ResearchCheckCommand {
         try (var paths = Files.walk(root, 10)) {
             var files = paths.filter(Files::isRegularFile).filter(path -> {
                 String name = path.getFileName().toString();
-                return name.endsWith(".js") || name.endsWith(".ts") && !name.endsWith(".d.ts");
+                return name.endsWith(".js");
             }).limit(257).toList();
             if (files.size() > 256) throw new IOException("Check supports up to 256 server script files.");
             for (var file : files) {

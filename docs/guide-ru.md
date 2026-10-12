@@ -28,7 +28,7 @@ KubeThaum позволяет писать исследования Thaumaturge �
 ## Куда класть скрипты
 
 Установите KubeThaum вместе с Thaumaturge, KubeJS, Rhino и зависимостями
-Thaumaturge. Версия 1.0 предназначена для Minecraft 26.1.2, NeoForge
+Thaumaturge. Версия 1.1 предназначена для Minecraft 26.1.2, NeoForge
 26.1.2.109 и выше в пределах 26.1.2, KubeJS 26.1.2-8.0.6 и Thaumaturge 1.0.2.
 Мод сам по себе не добавляет исследований: их задают ваши скрипты.
 
@@ -617,12 +617,8 @@ stage.construct(1, 2, 1, [
 имя читается через `snapshot.get('name').getAsString()`.
 Изменение снимка не меняет запись; для этого нужен `edit`.
 
-Для автодополнения в редакторе можно скопировать
-[kubethaum.d.ts](../types/kubethaum.d.ts) и [globals.d.ts](../types/globals.d.ts)
-в `kubejs/types/`, а [шаблон jsconfig](../types/jsconfig.example.json) — в
-`kubejs/jsconfig.json`. Если настройки уже существуют, добавьте `types/**/*.d.ts`
-в `include`. Эти файлы не нужны игре; если другие декларации уже объявляют
-`ThaumaturgeEvents` и `Thaumaturge`, не подключайте `globals.d.ts` второй раз.
+Создание рецептов, массовая настройка стоимости и бонусы адской печи
+описаны в [руководстве по рецептам 1.1](recipes-ru.md).
 
 ## Проверка скриптов командой
 

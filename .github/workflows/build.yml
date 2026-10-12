@@ -74,21 +74,6 @@ jobs:
           NEOFORGE_VERSION: ${{ matrix.neoforge }}
         run: ./gradlew --no-daemon build releaseArtifacts runGameTestServer "-Pneo_version=$NEOFORGE_VERSION" --console=plain
 
-      - name: Set up Node for editor declaration checks
-        if: matrix.neoforge == '26.1.2.109'
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-
-      - name: Check editor declarations and standalone examples
-        if: matrix.neoforge == '26.1.2.109'
-        shell: bash
-        run: |
-          npm install --prefix .tools/typescript --no-audit --no-fund --ignore-scripts typescript@5.9.3
-          node .tools/typescript/node_modules/typescript/lib/tsc.js --strict --noEmit --target ES2020 src/test/types/api.ts
-          mapfile -d '' examples < <(find examples/standalone -name '*.js' -print0)
-          node .tools/typescript/node_modules/typescript/lib/tsc.js --strict --noEmit --allowJs --checkJs --target ES2020 types/globals.d.ts src/test/types/kubejs-stubs.d.ts "${examples[@]}"
-
       - name: Upload release artifacts
         if: matrix.neoforge == '26.1.2.109'
         uses: actions/upload-artifact@v7
