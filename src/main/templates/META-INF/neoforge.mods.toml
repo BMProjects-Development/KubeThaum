@@ -16,6 +16,9 @@ description='''${mod_description}'''
 [[mixins]]
 config="kubethaum.mixins.json"
 
+[[mixins]]
+config="kubethaum.client.mixins.json"
+
 [[dependencies.kubethaum]]
 modId="neoforge"
 type="required"

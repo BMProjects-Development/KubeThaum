@@ -186,6 +186,38 @@ stage.requireResearch('thaumaturge:metallurgy')
 Условие относится к прохождению этого этапа. Для связи между записями на дереве
 используется `parent`, который разобран ниже.
 
+### Что игрок должен сделать или отсканировать
+
+`requireResearch` и `parent` принимают и флаги прогресса Thaumaturge.
+Это не записи исследований: Thaumaturge ставит их, когда игрок что-то делает в мире:
+
+```js
+stage.text('Отсканируйте зомби и железный слиток, затем побывайте в Нижнем мире.')
+stage.requireResearch('thaumaturge:scanned/entity/minecraft/zombie')
+stage.requireResearch('thaumaturge:scanned/item/minecraft/iron_ingot')
+stage.requireResearch('thaumaturge:m_hellandback')
+```
+
+| Флаг | Ставится, когда игрок… |
+| --- | --- |
+| `thaumaturge:scanned/item/<mod>/<item>` | сканирует этот предмет |
+| `thaumaturge:scanned/entity/<mod>/<mob>` | сканирует это существо |
+| `thaumaturge:scanned/effect/<mod>/<effect>` | сканирует что-то под этим эффектом |
+| `thaumaturge:scanned/enchantment/<mod>/<enchantment>` | сканирует предмет с этими чарами |
+| `thaumaturge:scanned/aspect/<mod>/<aspect>` | открывает этот аспект |
+| `key` записи сканирования Thaumaturge, например `thaumaturge:scanned/orblock3` | сканирует одну из её целей |
+| `thaumaturge:m_hellandback`, `m_endoftheworld` | попадает в Нижний мир или Край |
+| `thaumaturge:m_walker`, `m_runner`, `m_jumper`, `m_swimmer` | достаточно ходит, бегает, прыгает или плавает |
+
+Принимаются только эти шаблоны: несуществующий предмет, существо, эффект, чары
+или аспект — по-прежнему ошибка `unknown ID`, поэтому опечатки находятся.
+У сканируемого предмета или существа должны быть аспекты: Thaumaturge не сканирует
+вещи без аспектов, а также вещи, аспекты которых состоят из ещё не открытых игроком
+компонентов. Предметы других модов получают аспекты из своих рецептов.
+
+В книге такие требования показывают название и значок сканируемого предмета,
+существа, эффекта, чар или цели записи сканирования, например «Сканирование: Железный слиток».
+
 ### Знания, исследовательские записки и варп
 
 ```js

@@ -51,7 +51,7 @@ public final class ResearchResources implements ResourceManager {
         if (!(resources instanceof ScriptManagerHolderKJS holder) || holder.kjs$getScriptManager() == null) {
             throw new IllegalStateException("KubeThaum: server scripts are unavailable during research registry loading");
         }
-        var event = new ResearchEventJS(read(resources, ENTRY_DIR), read(resources, CATEGORY_DIR));
+        var event = new ResearchEventJS(read(resources, ENTRY_DIR), read(resources, CATEGORY_DIR), ProgressFlags.of(resources));
         ThaumaturgeEvents.RESEARCH.post(ScriptType.SERVER, event);
         var changes = event.finish();
         ResearchValidator.validateItems(changes.entries(), BuiltInRegistries.ITEM::containsKey);

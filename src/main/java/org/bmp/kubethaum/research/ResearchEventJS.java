@@ -14,11 +14,16 @@ public final class ResearchEventJS implements KubeEvent {
     private final Map<String, JsonObject> originalCategories;
     private final Map<String, ResearchBuilder> entries = new LinkedHashMap<>();
     private final Map<String, CategoryBuilder> categories = new LinkedHashMap<>();
+    private final ProgressFlags progressFlags;
     private Throwable scriptError;
 
     public ResearchEventJS(Map<String, JsonObject> entries, Map<String, JsonObject> categories) {
+        this(entries, categories, ProgressFlags.EVENTS_ONLY);
+    }
+    public ResearchEventJS(Map<String, JsonObject> entries, Map<String, JsonObject> categories, ProgressFlags progressFlags) {
         this.originalEntries = entries;
         this.originalCategories = categories;
+        this.progressFlags = progressFlags;
     }
 
     public ResearchBuilder create(String id) {
@@ -88,8 +93,9 @@ public final class ResearchEventJS implements KubeEvent {
         var allCategories = new LinkedHashMap<>(originalCategories);
         allEntries.putAll(modifiedEntries);
         allCategories.putAll(modifiedCategories);
+        var usedFlags = ResearchValidator.progressFlags(originalEntries);
         ResearchValidator.validate(allEntries, allCategories, modifiedEntries.keySet(), modifiedCategories.keySet(),
-            ResearchValidator.progressFlags(originalEntries));
+            id -> usedFlags.contains(id) || progressFlags.accepts(id));
         int changedResearch = (int)modifiedEntries.keySet().stream().filter(originalEntries::containsKey).count();
         int changedTabs = (int)modifiedCategories.keySet().stream().filter(originalCategories::containsKey).count();
         var summary = new Summary(modifiedEntries.size() - changedResearch, changedResearch,

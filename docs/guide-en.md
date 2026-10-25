@@ -185,6 +185,39 @@ stage.requireResearch('thaumaturge:metallurgy')
 This gates completion of the current stage. Use `parent`, explained below,
 to create a dependency between entries on the research tree.
 
+### Require something the player does or scans
+
+`requireResearch` and `parent` also accept Thaumaturge progress flags.
+They are not research entries; Thaumaturge records them when the player does
+something in the world:
+
+```js
+stage.text('Scan a zombie and an iron ingot, then visit the Nether.')
+stage.requireResearch('thaumaturge:scanned/entity/minecraft/zombie')
+stage.requireResearch('thaumaturge:scanned/item/minecraft/iron_ingot')
+stage.requireResearch('thaumaturge:m_hellandback')
+```
+
+| Flag | Recorded when the player… |
+| --- | --- |
+| `thaumaturge:scanned/item/<mod>/<item>` | scans that item |
+| `thaumaturge:scanned/entity/<mod>/<mob>` | scans that creature |
+| `thaumaturge:scanned/effect/<mod>/<effect>` | scans something under that effect |
+| `thaumaturge:scanned/enchantment/<mod>/<enchantment>` | scans an item with that enchantment |
+| `thaumaturge:scanned/aspect/<mod>/<aspect>` | discovers that aspect |
+| The `key` of a Thaumaturge scan entry, such as `thaumaturge:scanned/orblock3` | scans one of that entry's targets |
+| `thaumaturge:m_hellandback`, `m_endoftheworld` | enters the Nether or the End |
+| `thaumaturge:m_walker`, `m_runner`, `m_jumper`, `m_swimmer` | walks, sprints, jumps, or swims enough |
+
+Only these patterns are accepted: an item, mob, effect, enchantment, or
+aspect that does not exist is still an `unknown ID` error, so typos are caught.
+The scanned item or mob needs aspects; Thaumaturge refuses to scan things without
+them, and things whose aspects use components the player has not discovered yet.
+Items from other mods get aspects from their recipes.
+
+In the book, these requirements show the name and icon of the scanned item,
+mob, effect, enchantment, or scan target, such as "Scan: Iron Ingot".
+
 ### Knowledge, research notes, and warp
 
 ```js

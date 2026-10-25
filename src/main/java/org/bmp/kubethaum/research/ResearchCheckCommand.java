@@ -75,7 +75,8 @@ public final class ResearchCheckCommand {
         var resources = server.getResourceManager();
         var entries = ResearchResources.read(resources, ResearchResources.ENTRY_DIR);
         var categories = ResearchResources.read(resources, ResearchResources.CATEGORY_DIR);
-        var result = ResearchScriptCheck.check(sources, entries, categories, BuiltInRegistries.ITEM::containsKey);
+        var result = ResearchScriptCheck.check(sources, entries, categories, BuiltInRegistries.ITEM::containsKey,
+            ProgressFlags.of(resources));
         if (!result.successful()) return result;
         var problems = new ArrayList<>(result.problems());
         var changed = result.changes();

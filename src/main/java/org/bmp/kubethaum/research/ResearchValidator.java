@@ -15,42 +15,41 @@ import net.minecraft.resources.Identifier;
 public final class ResearchValidator {
     private ResearchValidator() {}
 
-    public static void validate(Map<String, JsonObject> entries, Map<String, JsonObject> categories,
-                                Set<String> changedEntries, Set<String> changedCategories) {
-        validate(entries, categories, changedEntries, changedCategories, Set.of());
-    }
-
     /**
      * Thaumaturge also uses {@code required_research} and {@code parents} for progress flags that
-     * are not entries ({@code f_onfire}, {@code m_deepdown}, {@code scanned/...}). Flags already
-     * used by the loaded data are accepted there; new unknown IDs still fail, so script typos are caught.
+     * are not entries ({@code f_onfire}, {@code m_deepdown}, {@code scanned/...}). Returns the ones
+     * the loaded data already uses; {@link ProgressFlags} recognizes the rest.
      */
     public static Set<String> progressFlags(Map<String, JsonObject> entries) {
         var flags = new HashSet<String>();
         for (var entry : entries.values()) {
-            for (var value : array(entry, "parents")) {
-                String parent;
-                try {
-                    parent = ResearchJson.parent(value.getAsString()).id();
-                } catch (IllegalArgumentException ex) {
-                    continue; // Malformed in someone else's data: only edited entries are validated.
-                }
-                if (!entries.containsKey(parent)) flags.add(parent);
-            }
-            var holders = new ArrayList<JsonObject>();
-            for (var stage : array(entry, "stages")) holders.add(stage.getAsJsonObject());
-            for (var page : array(entry, "addenda")) holders.add(page.getAsJsonObject());
-            for (var holder : holders) {
-                for (var ref : array(holder, "required_research")) {
-                    if (!entries.containsKey(ref.getAsString())) flags.add(ref.getAsString());
-                }
-            }
+            for (String id : progressReferences(entry)) if (!entries.containsKey(id)) flags.add(id);
         }
         return flags;
     }
 
+    /** IDs in {@code parents} (without stage) and every {@code required_research}: entries or progress flags. */
+    private static List<String> progressReferences(JsonObject entry) {
+        var refs = new ArrayList<String>();
+        for (var value : array(entry, "parents")) {
+            try {
+                refs.add(ResearchJson.parent(value.getAsString()).id());
+            } catch (IllegalArgumentException ex) {
+                // Malformed in someone else's data: only edited entries are validated.
+            }
+        }
+        var holders = new ArrayList<JsonObject>();
+        for (var stage : array(entry, "stages")) holders.add(stage.getAsJsonObject());
+        for (var page : array(entry, "addenda")) holders.add(page.getAsJsonObject());
+        for (var holder : holders) {
+            for (var ref : array(holder, "required_research")) refs.add(ref.getAsString());
+        }
+        return refs;
+    }
+
+    /** @param progressFlag whether an ID that is not an entry is a progress flag Thaumaturge records */
     public static void validate(Map<String, JsonObject> entries, Map<String, JsonObject> categories,
-                                Set<String> changedEntries, Set<String> changedCategories, Set<String> progressFlags) {
+                                Set<String> changedEntries, Set<String> changedCategories, Predicate<String> progressFlag) {
         for (String id : changedEntries) {
             var entry = entries.get(id);
             known(categories, entry.get("category").getAsString(), "Research '" + id + "', field 'category'");
@@ -59,7 +58,7 @@ public final class ResearchValidator {
             if (stages == null || stages.isEmpty()) fail(id, "needs at least one stage");
             for (var value : array(entry, "parents")) {
                 var parent = ResearchJson.parent(value.getAsString());
-                if (progressFlags.contains(parent.id())) continue;
+                if (!entries.containsKey(parent.id()) && progressFlag.test(parent.id())) continue;
                 known(entries, parent.id(), "Research '" + id + "', field 'parents'");
                 int stageCount = entries.get(parent.id()).getAsJsonArray("stages").size();
                 if (parent.stage() > stageCount) fail(id, "parent " + value + " exceeds its " + stageCount + " stages");
@@ -69,7 +68,7 @@ public final class ResearchValidator {
                 var stage = stages.get(index).getAsJsonObject();
                 String context = "Research '" + id + "', stage[" + index + "]";
                 ResearchJson.text(stage.get("text").getAsString());
-                requiredResearch(entries, stage, progressFlags, context);
+                requiredResearch(entries, stage, progressFlag, context);
                 for (String field : new String[]{"knowledge", "required_knowledge"}) {
                     for (var reward : array(stage, field)) {
                         var json = reward.getAsJsonObject();
@@ -81,7 +80,7 @@ public final class ResearchValidator {
             }
             var pages = array(entry, "addenda");
             for (int index = 0; index < pages.size(); index++) requiredResearch(entries, pages.get(index).getAsJsonObject(),
-                progressFlags, "Research '" + id + "', addendum[" + index + "]");
+                progressFlag, "Research '" + id + "', addendum[" + index + "]");
         }
         for (String id : changedCategories) {
             var category = categories.get(id);
@@ -158,10 +157,10 @@ public final class ResearchValidator {
     private static void references(Map<String, JsonObject> entries, JsonObject json, String field, String owner) {
         for (var ref : array(json, field)) known(entries, ref.getAsString(), owner + ", field '" + field + "'");
     }
-    private static void requiredResearch(Map<String, JsonObject> entries, JsonObject json, Set<String> progressFlags, String owner) {
+    private static void requiredResearch(Map<String, JsonObject> entries, JsonObject json, Predicate<String> progressFlag, String owner) {
         for (var ref : array(json, "required_research")) {
             String id = ref.getAsString();
-            if (!progressFlags.contains(id)) known(entries, id, owner + ", field 'required_research'");
+            if (!progressFlag.test(id)) known(entries, id, owner + ", field 'required_research'");
         }
     }
     private static void known(Map<String, JsonObject> entries, String id, String context) {

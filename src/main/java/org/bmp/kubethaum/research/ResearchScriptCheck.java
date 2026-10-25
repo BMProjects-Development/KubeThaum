@@ -43,13 +43,13 @@ public final class ResearchScriptCheck {
     private record Handler(Function function, Location location) {}
     private ResearchScriptCheck() {}
 
-    public static Result check(List<Source> sources, Map<String, JsonObject> entries,
-                               Map<String, JsonObject> categories, Predicate<Identifier> knownItem) {
+    public static Result check(List<Source> sources, Map<String, JsonObject> entries, Map<String, JsonObject> categories,
+                               Predicate<Identifier> knownItem, ProgressFlags progressFlags) {
         var problems = new ArrayList<Problem>();
         var locations = new LinkedHashMap<String, Location>();
         var handlers = new ArrayList<Handler>();
         var skipped = new int[1];
-        var event = new ResearchEventJS(entries, categories);
+        var event = new ResearchEventJS(entries, categories, progressFlags);
         var factory = new ContextFactory() {
             @Override protected Context createContext() { return new CheckContext(this, locations); }
         };
