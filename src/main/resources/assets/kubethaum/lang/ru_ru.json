@@ -3,5 +3,6 @@
   "commands.kubethaum.check.failed": "KubeThaum: проверка не пройдена или неполная — проблем: %s.",
   "commands.kubethaum.check.unavailable": "KubeThaum: не удалось завершить проверку: %s",
   "commands.kubethaum.check.more": "Остальные проблемы записаны в logs/latest.log.",
+  "kubethaum.flag.scanned": "Сканирование: %s",
   "commands.kubethaum.check.scope": "Изменения не применены. Проверены синтаксис свежих серверных файлов и изолированные обработчики исследований. Рецепты и другие события не выполнялись; внешние объекты KubeJS и игры недоступны. Для применения исследований заново откройте мир."
 }

@@ -2,6 +2,7 @@ package org.bmp.kubethaum;
 
 import com.google.gson.JsonObject;
 import java.util.Map;
+import java.util.Set;
 import org.bmp.kubethaum.research.*;
 
 /** Fast checks for progression invariants; integration and native codecs run in GameTests. */
@@ -54,6 +55,34 @@ public final class ResearchVerification {
         var stage = new ResearchEventJS(Map.of("pack:base", initial), categories);
         stage.create("pack:new").parent("pack:base@2").stage(page -> page.text("New"));
         rejects(stage::finish, "exceeds");
+        var flagged = research("pack:flagged").stage(page -> page.text("Flag").requireResearch("pack:f_onfire")).build();
+        var flags = new ResearchEventJS(Map.of("pack:base", initial, "pack:flagged", flagged), categories);
+        flags.edit("pack:flagged").hiddenParent("pack:base");
+        check(flags.finish().entries().containsKey("pack:flagged"), "editing an entry keeps its native progress flags");
+        var flagParent = research("pack:flag_parent").parent("pack:scanned/orecrystal").build();
+        var flagParents = new ResearchEventJS(Map.of("pack:base", initial, "pack:flag_parent", flagParent), categories);
+        flagParents.edit("pack:flag_parent").hiddenParent("pack:base");
+        check(flagParents.finish().entries().containsKey("pack:flag_parent"), "editing an entry keeps native progress-flag parents");
+        var typo = new ResearchEventJS(Map.of("pack:base", initial, "pack:flagged", flagged), categories);
+        typo.edit("pack:base").editStage(0, page -> page.requireResearch("pack:f_typo"));
+        rejects(typo::finish, "unknown ID 'pack:f_typo'");
+        var eventFlag = new ResearchEventJS(Map.of("pack:base", initial), categories);
+        eventFlag.create("pack:end").stage(page -> page.text("End").requireResearch("thaumaturge:m_endoftheworld"));
+        check(eventFlag.finish().entries().containsKey("pack:end"), "flags granted by Thaumaturge events are accepted");
+        var runtime = new ProgressFlags(Set.of("pack:f_custom"), Map.of("item", "minecraft:stone"::equals));
+        var scanned = new ResearchEventJS(Map.of("pack:base", initial), categories, runtime);
+        scanned.create("pack:scanned").parent("pack:f_custom")
+            .stage(page -> page.text("Scan").requireResearch("thaumaturge:scanned/item/minecraft/stone"));
+        check(scanned.finish().entries().containsKey("pack:scanned"), "scan entry keys and scanned registry IDs are accepted");
+        for (String bad : new String[]{"thaumaturge:scanned/item/minecraft/stoen", "thaumaturge:scanned/block/minecraft/stone",
+                                        "thaumaturge:scanned/item/minecraft"}) {
+            var badScan = new ResearchEventJS(Map.of("pack:base", initial), categories, runtime);
+            badScan.create("pack:bad_scan").stage(page -> page.text("Scan").requireResearch(bad));
+            rejects(badScan::finish, "unknown ID '" + bad + "'");
+        }
+        var both = new ResearchEventJS(Map.of("pack:base", initial), categories, new ProgressFlags(Set.of("pack:base"), Map.of()));
+        both.create("pack:both").parent("pack:base@5").stage(page -> page.text("Both"));
+        rejects(both::finish, "exceeds");
         var brokenScript = new ResearchEventJS(Map.of(), categories);
         brokenScript.scriptFailed(new IllegalStateException("Test exception"));
         rejects(brokenScript::finish, "script failed");

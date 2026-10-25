@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import java.util.List;
 import java.util.Map;
 import org.bmp.kubethaum.research.CategoryBuilder;
+import org.bmp.kubethaum.research.ProgressFlags;
 import org.bmp.kubethaum.research.ResearchBuilder;
 import org.bmp.kubethaum.research.ResearchScriptCheck;
 
@@ -42,7 +43,7 @@ public final class ScriptCheckVerification {
         var syntax = check(GOOD.replace("amount = 2 + 2", "amount = )"));
         verify(!syntax.successful() && syntax.problems().getFirst().location().line() == 1, "fresh syntax error located");
         var many = ResearchScriptCheck.check(List.of(new ResearchScriptCheck.Source("a.js", "const x = )"),
-            new ResearchScriptCheck.Source("b.js", "const y = )")), Map.of(), CATEGORIES, id -> true);
+            new ResearchScriptCheck.Source("b.js", "const y = )")), Map.of(), CATEGORIES, id -> true, ProgressFlags.EVENTS_ONLY);
         verify(many.problems().size() == 2, "syntax errors collected across files");
         verify(!check("Java.loadClass('java.lang.System')").successful(), "Java binding unavailable");
         verify(!check("Packages.java.lang.System.exit(0)").successful(), "Packages unavailable");
@@ -63,14 +64,14 @@ public final class ScriptCheckVerification {
         var original = new ResearchBuilder("check:base").stage(stage -> stage.text("Original")).build();
         var result = ResearchScriptCheck.check(List.of(new ResearchScriptCheck.Source("edit.js", """
             ThaumaturgeEvents.research(event => event.edit('check:base').title('Changed'))
-            """)), Map.of("check:base", original), CATEGORIES, id -> true);
+            """)), Map.of("check:base", original), CATEGORIES, id -> true, ProgressFlags.EVENTS_ONLY);
         verify(result.successful() && original.get("name").getAsString().equals("research.check.base"), "source data unchanged");
         verify(check(GOOD).successful(), "repeated checks do not retain registrations or created IDs");
         System.out.println("Script check verification: " + checks + " checks passed");
     }
     private static ResearchScriptCheck.Result check(String code) {
         return ResearchScriptCheck.check(List.of(new ResearchScriptCheck.Source("server_scripts/test.js", code)),
-            Map.of(), CATEGORIES, id -> id.toString().equals("minecraft:iron_ingot"));
+            Map.of(), CATEGORIES, id -> id.toString().equals("minecraft:iron_ingot"), ProgressFlags.EVENTS_ONLY);
     }
     private static void verify(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);
