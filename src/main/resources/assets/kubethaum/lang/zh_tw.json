@@ -1,0 +1,7 @@
+{
+  "commands.kubethaum.check.success": "KubeThaum：已檢查 %s 個文件和 %s 個研究處理程序；在所檢查的範圍內未發現任何錯誤。",
+  "commands.kubethaum.check.failed": "KubeThaum：檢查失敗或不完整—— %s 個問題。",
+  "commands.kubethaum.check.unavailable": "KubeThaum：檢查無法完成：%s",
+  "commands.kubethaum.check.more": "其餘問題位於 logs/latest.log 中。",
+  "commands.kubethaum.check.scope": "未應用任何更改。檢查了新的服務器腳本語法和孤立的研究處理程序。配方及其他事件回調未被執行；外部KubeJS / 遊戲綁定不可用。重新進入世界以應用研究變化。"
+}
