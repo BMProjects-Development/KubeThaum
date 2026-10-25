@@ -8,5 +8,6 @@ replace that version's release files; other versions stay available.
 | Version | Highlights |
 | --- | --- |
 | [1.2](1.2.md) | Progress flags in research requirements, with names and icons in the book; built-in research with flags can be edited. |
+| [1.1.1](1.1.1.md) | Simplified and Traditional Chinese translations for script check messages. |
 | [1.1](1.1.md) | Recipe builders, infernal furnace bonuses, script checking, and simpler guides. |
 | [1.0](1.0.md) | Custom research, Thaumonomicon tabs, and recipes unlocked through research. |
