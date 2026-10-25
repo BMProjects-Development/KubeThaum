@@ -54,6 +54,17 @@ public final class ResearchVerification {
         var stage = new ResearchEventJS(Map.of("pack:base", initial), categories);
         stage.create("pack:new").parent("pack:base@2").stage(page -> page.text("New"));
         rejects(stage::finish, "exceeds");
+        var flagged = research("pack:flagged").stage(page -> page.text("Flag").requireResearch("pack:f_onfire")).build();
+        var flags = new ResearchEventJS(Map.of("pack:base", initial, "pack:flagged", flagged), categories);
+        flags.edit("pack:flagged").hiddenParent("pack:base");
+        check(flags.finish().entries().containsKey("pack:flagged"), "editing an entry keeps its native progress flags");
+        var flagParent = research("pack:flag_parent").parent("pack:scanned/orecrystal").build();
+        var flagParents = new ResearchEventJS(Map.of("pack:base", initial, "pack:flag_parent", flagParent), categories);
+        flagParents.edit("pack:flag_parent").hiddenParent("pack:base");
+        check(flagParents.finish().entries().containsKey("pack:flag_parent"), "editing an entry keeps native progress-flag parents");
+        var typo = new ResearchEventJS(Map.of("pack:base", initial, "pack:flagged", flagged), categories);
+        typo.edit("pack:base").editStage(0, page -> page.requireResearch("pack:f_typo"));
+        rejects(typo::finish, "unknown ID 'pack:f_typo'");
         var brokenScript = new ResearchEventJS(Map.of(), categories);
         brokenScript.scriptFailed(new IllegalStateException("Test exception"));
         rejects(brokenScript::finish, "script failed");

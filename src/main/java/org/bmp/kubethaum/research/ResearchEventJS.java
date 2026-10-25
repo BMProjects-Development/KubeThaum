@@ -88,7 +88,8 @@ public final class ResearchEventJS implements KubeEvent {
         var allCategories = new LinkedHashMap<>(originalCategories);
         allEntries.putAll(modifiedEntries);
         allCategories.putAll(modifiedCategories);
-        ResearchValidator.validate(allEntries, allCategories, modifiedEntries.keySet(), modifiedCategories.keySet());
+        ResearchValidator.validate(allEntries, allCategories, modifiedEntries.keySet(), modifiedCategories.keySet(),
+            ResearchValidator.progressFlags(originalEntries));
         int changedResearch = (int)modifiedEntries.keySet().stream().filter(originalEntries::containsKey).count();
         int changedTabs = (int)modifiedCategories.keySet().stream().filter(originalCategories::containsKey).count();
         var summary = new Summary(modifiedEntries.size() - changedResearch, changedResearch,

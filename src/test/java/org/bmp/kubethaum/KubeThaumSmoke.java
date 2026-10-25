@@ -74,6 +74,10 @@ public final class KubeThaumSmoke extends GameTestInstance {
         if (edited.addenda().stream().noneMatch(page -> page.textKey().startsWith("Copper is now"))) {
             helper.fail("Existing research edit did not apply"); return;
         }
+        var flagged = entries.getValue(Identifier.parse("thaumaturge:base_auromancy"));
+        if (flagged == null || flagged.addenda().stream().noneMatch(page -> page.textKey().equals("Progress flag regression test"))) {
+            helper.fail("Edit of research with native progress flags did not apply"); return;
+        }
         var category = registries.lookupOrThrow(IResearchCategory.REGISTRY_KEY).getValue(Identifier.parse("kubejs:metallurgy"));
         if (category == null || category.formula().size() != 2 || !category.background().getPath().contains("back_3")) {
             helper.fail("Category style/formula incorrect"); return;
