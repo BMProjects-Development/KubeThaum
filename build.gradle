@@ -7,18 +7,8 @@ version = mod_version
 group = mod_group_id
 base { archivesName = "${mod_id}-${minecraft_version}" }
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(25)
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
     withSourcesJar()
-}
-
-// The compatibility processor must be loaded before the game/Mixin layer.
-sourceSets { compat }
-sourceSets.compat.compileClasspath = sourceSets.main.compileClasspath
-def compatJar = tasks.register('compatJar', Jar) {
-    from sourceSets.compat.output
-    archiveClassifier = 'compat'
-    destinationDirectory = layout.buildDirectory.dir('compat')
-    manifest.attributes('FMLModType': 'LIBRARY', 'Automatic-Module-Name': 'org.bmp.kubethaum.compat')
 }
 
 repositories {
@@ -48,9 +38,6 @@ neoForge {
 }
 
 dependencies {
-    jarJar files(compatJar)
-    runtimeOnly files(compatJar)
-    testImplementation files(compatJar)
     // Optional offline development against an existing installation; never bundled in this jar.
     if (providers.gradleProperty('localModsDir').isPresent()) {
         implementation fileTree(providers.gradleProperty('localModsDir').get()) {
@@ -63,10 +50,12 @@ dependencies {
         // Official release files, pinned by Modrinth version IDs.
         implementation("maven.modrinth:kubejs:${kubejs_modrinth_version}") { transitive = false }
         implementation("maven.modrinth:rhino:${rhino_modrinth_version}") { transitive = false }
-        implementation "curse.maven:thaumaturge-1628024:${thaumaturge_file_id}"
-        runtimeOnly 'curse.maven:curios-309927:8463519'
-        runtimeOnly 'curse.maven:lithostitched-936015:8944658'
-        runtimeOnly 'curse.maven:better-advanced-tooltips-1637623:8568911'
+        // TODO: change when Thaumaturge 1.21.1 uploads to curseforge
+        // For now, it needs the .jar in /libs to run
+        implementation fileTree('libs') { include 'thaumaturge-*.jar' }
+        runtimeOnly 'curse.maven:curios-309927:6529130'
+        runtimeOnly 'curse.maven:lithostitched-936015:9170709'
+        runtimeOnly 'curse.maven:better-advanced-tooltips-1637623:8576077'
     }
 }
 
@@ -93,12 +82,6 @@ tasks.register('verifyResearch', JavaExec) {
     mainClass = 'org.bmp.kubethaum.ResearchVerification'
     enableAssertions = true
 }
-tasks.register('verifyCompatibility', JavaExec) {
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'org.bmp.kubethaum.CompatibilityVerification'
-    enableAssertions = true
-}
 tasks.register('verifyScriptCheck', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath
@@ -115,8 +98,7 @@ tasks.register('verifyReleaseNotes') {
     }
 }
 
-tasks.named('check') { dependsOn 'verifyResearch', 'verifyCompatibility', 'verifyScriptCheck', 'verifyReleaseNotes' }
-tasks.named('sourcesJar') { from sourceSets.compat.allSource }
+tasks.named('check') { dependsOn 'verifyResearch', 'verifyScriptCheck', 'verifyReleaseNotes' }
 tasks.named('test') { enabled = false } // Checks use verifyResearch and the actual GameTest server.
 
 def prepareSmokeScripts = tasks.register('prepareSmokeScripts', Copy) {

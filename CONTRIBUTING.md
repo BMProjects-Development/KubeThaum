@@ -1,6 +1,11 @@
 # Working on KubeThaum
 
-Use the checked-in Gradle wrapper with Java 25:
+// TODO: change when Thaumaturge 1.21.1 uploads to curseforge
+This branch targets Minecraft 1.21.1. Until Thaumaturge 1.21.1 gets uploaded to curseforge you have to copy its jar into `libs/`
+first (`libs/thaumaturge-1.21.1-NeoForge-<version>.jar`), or pass
+`-PlocalModsDir=<instance>/mods` to build against an existing installation.  
+
+Use the checked-in Gradle wrapper with Java 21:
 
 ```sh
 ./gradlew build releaseArtifacts runGameTestServer

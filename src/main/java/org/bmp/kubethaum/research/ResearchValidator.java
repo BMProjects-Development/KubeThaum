@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /** Checks references the native codecs represent as IDs rather than resolved holders. */
 public final class ResearchValidator {
@@ -98,7 +98,7 @@ public final class ResearchValidator {
     }
 
     /** Static items are available now; tags and dynamic holders are resolved by native codecs. */
-    public static void validateItems(Map<String, JsonObject> entries, Predicate<Identifier> knownItem) {
+    public static void validateItems(Map<String, JsonObject> entries, Predicate<ResourceLocation> knownItem) {
         entries.forEach((id, entry) -> {
             String owner = "Research '" + id + "'";
             var stages = array(entry, "stages");
@@ -124,10 +124,10 @@ public final class ResearchValidator {
         });
     }
 
-    private static void item(String item, String context, Predicate<Identifier> knownItem) {
+    private static void item(String item, String context, Predicate<ResourceLocation> knownItem) {
         if (item.startsWith("#")) return;
         ResearchDiagnostics.at(context, () -> {
-            if (!knownItem.test(Identifier.parse(ResearchJson.id(item)))) {
+            if (!knownItem.test(ResourceLocation.parse(ResearchJson.id(item)))) {
                 throw new IllegalArgumentException("Unknown item '" + item + "'");
             }
         });

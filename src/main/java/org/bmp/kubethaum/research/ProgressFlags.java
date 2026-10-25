@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 /**
@@ -69,9 +69,9 @@ public final class ProgressFlags {
         return kind != null && kind.test(parts[1] + ":" + parts[2]);
     }
 
-    private static Predicate<String> registered(Predicate<Identifier> registry) {
+    private static Predicate<String> registered(Predicate<ResourceLocation> registry) {
         return id -> {
-            var parsed = Identifier.tryParse(id);
+            var parsed = ResourceLocation.tryParse(id);
             return parsed != null && registry.test(parsed);
         };
     }

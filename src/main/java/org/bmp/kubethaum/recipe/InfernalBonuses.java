@@ -6,12 +6,12 @@ import com.google.gson.JsonParser;
 import dev.latvian.mods.kubejs.generator.KubeDataGenerator;
 import java.nio.charset.StandardCharsets;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.bmp.kubethaum.research.ResearchJson;
 
 /** Generate native data-map JSON before tags load; NeoForge resolves tags during data-map loading. */
 public final class InfernalBonuses {
-    private static final Identifier FILE = Identifier.parse("thaumaturge:data_maps/item/infernal_bonus.json");
+    private static final ResourceLocation FILE = ResourceLocation.parse("thaumaturge:data_maps/item/infernal_bonus.json");
     private InfernalBonuses() {}
 
     public static void write(KubeDataGenerator data, String input, String output, int count, float chance, boolean replace) {
@@ -77,6 +77,6 @@ public final class InfernalBonuses {
         if (value == null) throw new IllegalArgumentException("Expected an item ID or tag");
         boolean tag = value.startsWith("#");
         String id = ResearchJson.id(tag ? value.substring(1) : value);
-        if (!tag && !BuiltInRegistries.ITEM.containsKey(Identifier.parse(id))) throw new IllegalArgumentException("Unknown item '" + id + "'");
+        if (!tag && !BuiltInRegistries.ITEM.containsKey(ResourceLocation.parse(id))) throw new IllegalArgumentException("Unknown item '" + id + "'");
     }
 }

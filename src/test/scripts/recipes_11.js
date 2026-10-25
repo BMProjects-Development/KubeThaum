@@ -25,24 +25,24 @@ ServerEvents.recipes(event => {
 ServerEvents.generateData('after_mods', event => {
   // These are loaded as original recipes, so KubeJS bulk operations can find them.
   event.json('kubethaum:recipe/recipe_edit.json', {
-    type: 'thaumaturge:crucible', catalyst: 'minecraft:iron_ingot',
+    type: 'thaumaturge:crucible', catalyst: { item: 'minecraft:iron_ingot' },
     aspects: [{ aspect: 'thaumaturge:ordo', amount: 4 }],
     result: { id: 'minecraft:gold_ingot' }, pack_custom_field: 'keep'
   })
   event.json('kubethaum:recipe/recipe_removed.json', {
-    type: 'thaumaturge:crucible', catalyst: 'minecraft:stone',
+    type: 'thaumaturge:crucible', catalyst: { item: 'minecraft:stone' },
     aspects: [{ aspect: 'thaumaturge:ordo', amount: 1 }], result: { id: 'minecraft:stick' }
   })
   event.json('kubethaum:recipe/infusion_edit.json', {
-    type: 'thaumaturge:infusion', catalyst: 'minecraft:gold_ingot', components: ['minecraft:emerald'],
+    type: 'thaumaturge:infusion', catalyst: { item: 'minecraft:gold_ingot' }, components: [{ item: 'minecraft:emerald' }],
     aspects: [{ aspect: 'thaumaturge:ordo', amount: 2 }], result: { id: 'minecraft:diamond' }, instability: 2
   })
   event.json('kubethaum:recipe/infusion_patch.json', {
-    type: 'thaumaturge:infusion', catalyst: 'minecraft:iron_sword', components: ['minecraft:emerald'],
+    type: 'thaumaturge:infusion', catalyst: { item: 'minecraft:iron_sword' }, components: [{ item: 'minecraft:emerald' }],
     aspects: [{ aspect: 'thaumaturge:ordo', amount: 2 }], catalyst_patch: { 'minecraft:damage': 0 }
   })
   event.json('kubethaum:recipe/shaped_edit.json', {
-    type: 'thaumaturge:arcane_workbench_shaped', pattern: ['II', 'II'], key: { I: 'minecraft:iron_ingot' },
+    type: 'thaumaturge:arcane_workbench_shaped', pattern: ['II', 'II'], key: { I: { item: 'minecraft:iron_ingot' } },
     vis: 20, crystals: [{ aspect: 'thaumaturge:ignis', amount: 2 }], result: { id: 'minecraft:gold_ingot' }
   })
   // Independent fixed outputs for native data-map assertions.

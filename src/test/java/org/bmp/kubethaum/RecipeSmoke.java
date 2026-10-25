@@ -6,9 +6,7 @@ import com.leclowndu93150.thaumaturge.content.recipe.crucible.CrucibleRecipe;
 import com.leclowndu93150.thaumaturge.content.recipe.workbench.ArcaneCraftingRecipe;
 import com.leclowndu93150.thaumaturge.content.infusion.InfusionRecipe;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
@@ -31,10 +29,10 @@ final class RecipeSmoke {
         require(((ResearchGated)edited).researchGate().orElseThrow().entry().toString().equals("kubejs:basic_metallurgy"), "research survives edits");
         var input = new com.leclowndu93150.thaumaturge.content.recipe.crucible.CrucibleRecipeInput(
             new ItemStack(Items.COPPER_INGOT), edited.aspects());
-        require(edited.matches(input, server.overworld()) && edited.assemble(input).is(Items.DIAMOND), "native crucible/Thaumatorium matching and output");
+        require(edited.matches(input, server.overworld()) && edited.assemble(input, server.registryAccess()).is(Items.DIAMOND), "native crucible/Thaumatorium matching and output");
         require(!edited.matches(new com.leclowndu93150.thaumaturge.content.recipe.crucible.CrucibleRecipeInput(
             new ItemStack(Items.COPPER_INGOT), com.leclowndu93150.thaumaturge.api.aspect.AspectList.EMPTY), server.overworld()), "native aspect requirement");
-        require(server.getRecipeManager().byKey(ResourceKey.create(Registries.RECIPE, Identifier.parse("kubethaum:recipe_removed"))).isEmpty(), "remove");
+        require(server.getRecipeManager().byKey(ResourceLocation.parse("kubethaum:recipe_removed")).isEmpty(), "remove");
         var infusion = (InfusionRecipe) get(server, "kubethaum:infusion_edit");
         var infusionJson = Recipe.CODEC.encodeStart(ops, infusion).getOrThrow().getAsJsonObject();
         require(infusionJson.get("instability").getAsInt() == 2 && infusionJson.getAsJsonArray("components").toString().contains("lapis_lazuli"), "infusion edits");
@@ -61,7 +59,7 @@ final class RecipeSmoke {
         System.out.println("KubeThaum: 1.1 recipes and furnace data verified");
     }
     private static Recipe<?> get(MinecraftServer server, String id) {
-        return server.getRecipeManager().byKey(ResourceKey.create(Registries.RECIPE, Identifier.parse(id))).orElseThrow().value();
+        return server.getRecipeManager().byKey(ResourceLocation.parse(id)).orElseThrow().value();
     }
     private static void require(boolean condition, String message) { if (!condition) throw new AssertionError(message); }
 }
