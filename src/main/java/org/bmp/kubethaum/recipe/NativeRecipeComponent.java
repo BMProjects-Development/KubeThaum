@@ -9,15 +9,20 @@ import dev.latvian.mods.kubejs.recipe.component.RecipeComponentType;
 import dev.latvian.mods.kubejs.recipe.component.SimpleRecipeComponent;
 import dev.latvian.mods.kubejs.util.JsonUtils;
 import dev.latvian.mods.rhino.type.TypeInfo;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /** Uses the same registry-aware validation as Thaumaturge's recipe serializers. */
 public final class NativeRecipeComponent<T> extends SimpleRecipeComponent<T> {
     private final boolean aspectMap;
 
-    public NativeRecipeComponent(String name, Codec<T> codec, boolean aspectMap) {
-        super(RecipeComponentType.key(Identifier.fromNamespaceAndPath("kubethaum", name)), codec, TypeInfo.OBJECT);
+    private NativeRecipeComponent(RecipeComponentType<?> type, Codec<T> codec, boolean aspectMap) {
+        super(type, codec, TypeInfo.OBJECT);
         this.aspectMap = aspectMap;
+    }
+
+    public static <T> RecipeComponentType<T> type(String name, Codec<T> codec, boolean aspectMap) {
+        return RecipeComponentType.unit(ResourceLocation.fromNamespaceAndPath("kubethaum", name),
+            type -> new NativeRecipeComponent<>(type, codec, aspectMap));
     }
 
     @Override public T wrap(RecipeScriptContext context, Object from) {

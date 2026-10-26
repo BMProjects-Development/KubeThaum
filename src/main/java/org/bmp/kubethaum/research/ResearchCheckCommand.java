@@ -24,7 +24,7 @@ import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -42,7 +42,7 @@ public final class ResearchCheckCommand {
 
     @SubscribeEvent public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("kubethaum")
-            .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+            .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
             .then(Commands.literal("check").executes(context -> execute(context.getSource()))));
     }
 
@@ -89,7 +89,7 @@ public final class ResearchCheckCommand {
         for (var entry : allCategories.entrySet()) {
             try {
                 var category = ResearchCategory.CODEC.parse(ops, entry.getValue()).getOrThrow();
-                temporary.register(ResourceKey.create(IResearchCategory.REGISTRY_KEY, Identifier.parse(entry.getKey())),
+                temporary.register(ResourceKey.create(IResearchCategory.REGISTRY_KEY, ResourceLocation.parse(entry.getKey())),
                     category, RegistrationInfo.BUILT_IN);
             } catch (RuntimeException error) {
                 String message = "Category '" + entry.getKey() + "': " + error.getMessage();
@@ -98,8 +98,9 @@ public final class ResearchCheckCommand {
         }
         if (problems.isEmpty()) {
             temporary.freeze();
-            var registries = HolderLookup.Provider.create(Stream.concat(server.registryAccess().listRegistries()
-                .filter(registry -> !registry.key().equals(IResearchCategory.REGISTRY_KEY)), Stream.of(temporary)));
+            var registries = HolderLookup.Provider.create(Stream.<HolderLookup.RegistryLookup<?>>concat(server.registryAccess().registries()
+                .filter(registry -> !registry.key().equals(IResearchCategory.REGISTRY_KEY)).map(registry -> registry.value().asLookup()),
+                Stream.of(temporary.asLookup())));
             var entryOps = RegistryOps.create(JsonOps.INSTANCE, registries);
             for (var entry : changed.entries().entrySet()) {
                 try { ResearchEntry.CODEC.parse(entryOps, entry.getValue()).getOrThrow(); }

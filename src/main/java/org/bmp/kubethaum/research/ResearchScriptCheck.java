@@ -24,7 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /** Evaluates fresh research scripts using detached builders and no game/Java bindings. */
 public final class ResearchScriptCheck {
@@ -44,7 +44,7 @@ public final class ResearchScriptCheck {
     private ResearchScriptCheck() {}
 
     public static Result check(List<Source> sources, Map<String, JsonObject> entries, Map<String, JsonObject> categories,
-                               Predicate<Identifier> knownItem, ProgressFlags progressFlags) {
+                               Predicate<ResourceLocation> knownItem, ProgressFlags progressFlags) {
         var problems = new ArrayList<Problem>();
         var locations = new LinkedHashMap<String, Location>();
         var handlers = new ArrayList<Handler>();

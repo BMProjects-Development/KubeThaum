@@ -3,13 +3,13 @@ package org.bmp.kubethaum.research;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public final class ResearchJson {
     private ResearchJson() {}
 
     public static String id(String value) {
-        if (value == null || !value.contains(":") || Identifier.tryParse(value) == null) {
+        if (value == null || !value.contains(":") || ResourceLocation.tryParse(value) == null) {
             throw new IllegalArgumentException("Expected a namespaced identifier, got '" + value + "'");
         }
         return value;

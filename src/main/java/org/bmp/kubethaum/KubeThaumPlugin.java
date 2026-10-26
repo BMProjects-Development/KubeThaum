@@ -15,10 +15,10 @@ import org.bmp.kubethaum.recipe.ThaumaturgeRecipes;
 
 public final class KubeThaumPlugin implements KubeJSPlugin {
     @Override public void registerRecipeComponents(RecipeComponentTypeRegistry registry) {
-        registry.unit(ThaumaturgeRecipes.ASPECTS);
-        registry.unit(ThaumaturgeRecipes.CRYSTALS);
-        registry.unit(ThaumaturgeRecipes.GATE);
-        registry.unit(ThaumaturgeRecipes.ENCHANTMENT);
+        registry.register(ThaumaturgeRecipes.ASPECTS);
+        registry.register(ThaumaturgeRecipes.CRYSTALS);
+        registry.register(ThaumaturgeRecipes.GATE);
+        registry.register(ThaumaturgeRecipes.ENCHANTMENT);
     }
     @Override public void registerRecipeFactories(RecipeFactoryRegistry registry) { registry.register(ThaumaturgeRecipes.FACTORY); }
     @Override public void registerRecipeSchemas(RecipeSchemaRegistry registry) { ThaumaturgeRecipes.register(registry); }

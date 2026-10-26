@@ -1,7 +1,7 @@
 ServerEvents.recipes(event => {
   const test = event.custom({
     type: 'thaumaturge:crucible',
-    catalyst: 'minecraft:copper_ingot',
+    catalyst: { item: 'minecraft:copper_ingot' },
     aspects: [{ aspect: 'thaumaturge:ordo', amount: 1 }],
     result: { id: 'minecraft:iron_ingot', count: 1 }
   }).id('kubethaum:gate_validation')

@@ -2,7 +2,7 @@
   "required": false,
   "minVersion": "0.8",
   "package": "org.bmp.kubethaum.mixin.client",
-  "compatibilityLevel": "JAVA_25",
+  "compatibilityLevel": "JAVA_21",
   "client": [
     "EntryDetailScreenMixin",
     "TTTooltipsMixin"

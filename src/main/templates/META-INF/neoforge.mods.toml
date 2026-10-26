@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[11,)"
+loaderVersion="[4,)"
 license="${mod_license}"
 issueTrackerURL="https://github.com/BMProjects-Development/KubeThaum/issues"
 
@@ -36,13 +36,13 @@ side="BOTH"
 [[dependencies.kubethaum]]
 modId="kubejs"
 type="required"
-versionRange="[26.1.2-8.0.6]"
+versionRange="[2101.7.2,2101.8)"
 ordering="AFTER"
 side="BOTH"
 
 [[dependencies.kubethaum]]
 modId="thaumaturge"
 type="required"
-versionRange="[1.0.2,1.1)"
+versionRange="[1.0.6,1.1)"
 ordering="AFTER"
 side="BOTH"

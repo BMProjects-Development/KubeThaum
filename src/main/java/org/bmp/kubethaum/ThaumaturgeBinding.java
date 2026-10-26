@@ -3,7 +3,7 @@ package org.bmp.kubethaum;
 import com.google.gson.JsonObject;
 import dev.latvian.mods.kubejs.recipe.KubeRecipe;
 import com.leclowndu93150.thaumaturge.api.research.IResearchEntry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import java.util.Set;
 import org.bmp.kubethaum.research.ResearchJson;
@@ -36,7 +36,7 @@ public final class ThaumaturgeBinding {
     private static KubeRecipe requireResearch(KubeRecipe recipe, JsonObject gate) {
         String type = recipe.type.schemaType.serializerType;
         if (!GATED_RECIPES.contains(type)) throw new IllegalArgumentException("Recipe type '" + type + "' does not support Thaumaturge ResearchGate");
-        var entryId = Identifier.parse(gate.get("entry").getAsString());
+        var entryId = ResourceLocation.parse(gate.get("entry").getAsString());
         var entries = recipe.type.event.ops.json().getter(IResearchEntry.REGISTRY_KEY)
             .orElseThrow(() -> new IllegalArgumentException("ResearchGate must be configured inside ServerEvents.recipes"));
         var entry = entries.get(ResourceKey.create(IResearchEntry.REGISTRY_KEY, entryId))

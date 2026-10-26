@@ -3,7 +3,7 @@ package org.bmp.kubethaum;
 import dev.latvian.mods.kubejs.KubeJSPaths;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import com.leclowndu93150.thaumaturge.api.research.IResearchEntry;
 import org.bmp.kubethaum.research.ResearchCheckCommand;
@@ -11,9 +11,9 @@ import org.bmp.kubethaum.research.ResearchCheckCommand;
 /** Fresh files must be checked without changing world registries or live script handlers. */
 final class ScriptCheckSmoke {
     static void verify(MinecraftServer server) throws Exception {
-        var registry = server.registryAccess().lookupOrThrow(IResearchEntry.REGISTRY_KEY);
-        var original = registry.getValue(Identifier.parse("kubejs:basic_metallurgy"));
-        long count = registry.listElements().count();
+        var registry = server.registryAccess().registryOrThrow(IResearchEntry.REGISTRY_KEY);
+        var original = registry.get(ResourceLocation.parse("kubejs:basic_metallurgy"));
+        long count = registry.holders().count();
         Path file = KubeJSPaths.SERVER_SCRIPTS.resolve("zz_check_verification.js");
         Path ignored = KubeJSPaths.SERVER_SCRIPTS.resolve("zz_check_ignored.js");
         String good = """
@@ -34,9 +34,9 @@ final class ScriptCheckSmoke {
             var result = ResearchCheckCommand.check(server);
             require(result.successful(), "fresh good script and ignored file: " + result.problems());
             require(result.changes().entries().containsKey("check:dry_run"), "new disk script was not evaluated");
-            require(registry.getValue(Identifier.parse("check:dry_run")) == null, "dry run added a live entry");
-            require(registry.getValue(Identifier.parse("kubejs:basic_metallurgy")) == original
-                && registry.listElements().count() == count, "dry run replaced live holders");
+            require(registry.get(ResourceLocation.parse("check:dry_run")) == null, "dry run added a live entry");
+            require(registry.get(ResourceLocation.parse("kubejs:basic_metallurgy")) == original
+                && registry.holders().count() == count, "dry run replaced live holders");
             require(server.getCommands().getDispatcher().execute("kubethaum check", server.createCommandSourceStack()) == 1,
                 "operator command did not succeed");
 
@@ -59,8 +59,8 @@ final class ScriptCheckSmoke {
                 "fresh syntax error was not found");
             Files.writeString(file, good);
             require(ResearchCheckCommand.check(server).successful(), "fixed file did not pass on repeated check");
-            require(registry.getValue(Identifier.parse("kubejs:basic_metallurgy")) == original
-                && registry.listElements().count() == count, "failed checks changed live registry");
+            require(registry.get(ResourceLocation.parse("kubejs:basic_metallurgy")) == original
+                && registry.holders().count() == count, "failed checks changed live registry");
         } finally {
             Files.deleteIfExists(file);
             Files.deleteIfExists(ignored);
