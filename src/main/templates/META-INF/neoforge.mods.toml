@@ -36,7 +36,7 @@ side="BOTH"
 [[dependencies.kubethaum]]
 modId="kubejs"
 type="required"
-versionRange="[26.1.2-8.0.6]"
+versionRange="${kubejs_version_range}"
 ordering="AFTER"
 side="BOTH"
 

@@ -16,13 +16,21 @@ concurrency:
 
 jobs:
   build:
-    name: NeoForge ${{ matrix.neoforge }}
+    name: NeoForge ${{ matrix.neoforge }} / KubeJS ${{ matrix.kubejs.version }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
-        neoforge: ["26.1.2.109", "26.1.2.115"]
+        include:
+          - neoforge: "26.1.2.109"
+            kubejs: { version: "8.0.6", modrinth: "FzLyIIBB" }
+          - neoforge: "26.1.2.115"
+            kubejs: { version: "8.0.6", modrinth: "FzLyIIBB" }
+          - neoforge: "26.1.2.110"
+            kubejs: { version: "8.0.7", modrinth: "7Vil8vwK" }
+          - neoforge: "26.1.2.115"
+            kubejs: { version: "8.0.7", modrinth: "7Vil8vwK" }
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -60,10 +68,11 @@ jobs:
       - name: Build, package and run GameTests
         env:
           NEOFORGE_VERSION: ${{ matrix.neoforge }}
-        run: ./gradlew --no-daemon build releaseArtifacts runGameTestServer "-Pneo_version=$NEOFORGE_VERSION" --console=plain
+          KUBEJS_MODRINTH_VERSION: ${{ matrix.kubejs.modrinth }}
+        run: ./gradlew --no-daemon build releaseArtifacts runGameTestServer "-Pneo_version=$NEOFORGE_VERSION" "-Pkubejs_modrinth_version=$KUBEJS_MODRINTH_VERSION" --console=plain
 
       - name: Upload release artifacts
-        if: matrix.neoforge == '26.1.2.109'
+        if: matrix.neoforge == '26.1.2.115' && matrix.kubejs.version == '8.0.7'
         uses: actions/upload-artifact@v7
         with:
           name: kubethaum-${{ steps.version.outputs.version }}
@@ -74,7 +83,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: logs-neoforge-${{ matrix.neoforge }}
+          name: logs-neoforge-${{ matrix.neoforge }}-kubejs-${{ matrix.kubejs.version }}
           path: |
             run-gametest/logs/
             run-gametest/kubejs/logs/

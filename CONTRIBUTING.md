@@ -12,7 +12,9 @@ Dependency versions are maintained in `gradle.properties`.
 
 ## Release automation
 
-GitHub Actions builds and tests against both NeoForge versions in its matrix.
+GitHub Actions builds and tests KubeJS 8.0.6 on NeoForge `.109` and `.115`,
+and KubeJS 8.0.7 on `.110` and `.115`. KubeJS 8.0.7 requires NeoForge
+`26.1.2.110` or newer; it cannot be used on `.109`.
 Pull requests and other branches run checks. A successful build on the default
 branch, or a matching `v<version>` tag, can publish a release.
 
