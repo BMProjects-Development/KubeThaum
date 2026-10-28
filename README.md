@@ -3,7 +3,7 @@
 Customize **Thaumaturge** with KubeJS: write your own research, shape your
 modpack's progression, and add or rebalance magical recipes in JavaScript.
 
-[Download](https://github.com/BMProjects-Development/KubeThaum/releases/latest)
+[Download](https://github.com/BMProjects-Development/KubeThaum/releases/tag/v1.2-mc1.21.1)
 · [Examples](examples)
 · [What's changed](changelogs/README.md)
 · [Report an issue](https://github.com/BMProjects-Development/KubeThaum/issues)
@@ -26,6 +26,9 @@ modpack's progression, and add or rebalance magical recipes in JavaScript.
 3. Reopen the world to apply research. For recipe changes, run `/reload`.
 
 KubeThaum adds the scripting tools; your scripts define what appears in the pack.
+
+For this branch, build Thaumaturge from its matching source revision until
+it is available on CurseForge. See the [build instructions](CONTRIBUTING.md).
 
 ## Guides
 

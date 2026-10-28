@@ -50,9 +50,15 @@ dependencies {
         // Official release files, pinned by Modrinth version IDs.
         implementation("maven.modrinth:kubejs:${kubejs_modrinth_version}") { transitive = false }
         implementation("maven.modrinth:rhino:${rhino_modrinth_version}") { transitive = false }
-        // TODO: change when Thaumaturge 1.21.1 uploads to curseforge
-        // For now, it needs the .jar in /libs to run
-        implementation fileTree('libs') { include 'thaumaturge-*.jar' }
+        // Built from the pinned upstream revision; never included in our release.
+        def thaumaturgeJars = fileTree('libs') {
+            include 'thaumaturge-*.jar'
+            exclude '*-sources.jar', '*-javadoc.jar'
+        }
+        if (thaumaturgeJars.files.size() != 1) {
+            throw new GradleException('Put exactly one built Thaumaturge 1.21.1 mod JAR in libs/; see CONTRIBUTING.md')
+        }
+        implementation thaumaturgeJars
         runtimeOnly 'curse.maven:curios-309927:6529130'
         runtimeOnly 'curse.maven:lithostitched-936015:9170709'
         runtimeOnly 'curse.maven:better-advanced-tooltips-1637623:8576077'
@@ -110,7 +116,7 @@ def prepareSmokeScripts = tasks.register('prepareSmokeScripts', Copy) {
 
 tasks.register('releaseZip', Zip) {
     dependsOn tasks.named('jar'), tasks.named('verifyReleaseNotes')
-    archiveFileName = "KubeThaum-${mod_version}.zip"
+    archiveFileName = "KubeThaum-${minecraft_version}-${mod_version}.zip"
     destinationDirectory = layout.buildDirectory.dir('distributions')
     from(tasks.named('jar')) { into 'mods' }
     from('examples') { into 'examples' }

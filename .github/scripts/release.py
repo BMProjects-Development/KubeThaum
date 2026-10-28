@@ -32,7 +32,11 @@ def metadata(root):
     notes = root / "changelogs" / f"{version}.md"
     if not notes.is_file() or not notes.read_text(encoding="utf-8").strip():
         raise ValueError(f"Add release notes in changelogs/{version}.md")
-    return version, f"v{version}", f"{mod_id}-{minecraft}-{version}", notes
+    return version, release_tag(version, minecraft), f"{mod_id}-{minecraft}-{version}", notes, minecraft
+
+
+def release_tag(version, minecraft):
+    return f"v{version}-mc{minecraft}"
 
 
 class GitHub:
@@ -83,10 +87,10 @@ def find_release(api, base, tag):
         page += 1
 
 
-def publish(api, repository, sha, ref, version, stem, artifact_dir, notes):
-    tag = f"v{version}"
+def publish(api, repository, sha, ref, version, stem, artifact_dir, notes, minecraft):
+    tag = release_tag(version, minecraft)
     files = [artifact_dir / name for name in (
-        f"{stem}.jar", f"{stem}-sources.jar", f"KubeThaum-{version}.zip"
+        f"{stem}.jar", f"{stem}-sources.jar", f"KubeThaum-{minecraft}-{version}.zip"
     )]
     for file in files:
         if not file.is_file() or file.stat().st_size == 0:
@@ -97,8 +101,8 @@ def publish(api, repository, sha, ref, version, stem, artifact_dir, notes):
 
     base = f"/repos/{repository}"
     default_branch = api.request("GET", base)["default_branch"]
-    if ref not in (f"refs/heads/{default_branch}", f"refs/tags/{tag}"):
-        raise ValueError("Only the default branch or the matching version tag can publish")
+    if ref not in (f"refs/heads/{default_branch}", f"refs/heads/{minecraft}", f"refs/tags/{tag}"):
+        raise ValueError("Only the default branch, matching Minecraft branch or matching version tag can publish")
     ref_name = ref.split("/", 2)[2]
     head = api.request("GET", f"{base}/commits/{quote(ref_name, safe='')}", missing_ok=True)
     if head is None or head["sha"] != sha:
@@ -127,7 +131,7 @@ def publish(api, repository, sha, ref, version, stem, artifact_dir, notes):
     release = api.request("POST", f"{base}/releases", {
         "tag_name": tag,
         "target_commitish": sha,
-        "name": f"KubeThaum {version}",
+        "name": f"KubeThaum {version} (Minecraft {minecraft})",
         "body": body,
         "draft": True,
         "prerelease": prerelease,
@@ -143,7 +147,7 @@ def publish(api, repository, sha, ref, version, stem, artifact_dir, notes):
 
 def main():
     root = Path(__file__).resolve().parents[2]
-    version, tag, stem, notes = metadata(root)
+    version, tag, stem, notes, minecraft = metadata(root)
     ref = os.environ["GITHUB_REF"]
     if ref.startswith("refs/tags/") and ref != f"refs/tags/{tag}":
         raise ValueError("Tag must match mod_version in gradle.properties")
@@ -155,7 +159,7 @@ def main():
         return
     sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     api = GitHub(os.environ["GH_TOKEN"], os.environ.get("GITHUB_API_URL", "https://api.github.com"))
-    url = publish(api, os.environ["GITHUB_REPOSITORY"], sha, ref, version, stem, root / "release", notes)
+    url = publish(api, os.environ["GITHUB_REPOSITORY"], sha, ref, version, stem, root / "release", notes, minecraft)
     if url:
         print(f"Published KubeThaum {version}: {url}")
         if os.environ.get("GITHUB_STEP_SUMMARY"):

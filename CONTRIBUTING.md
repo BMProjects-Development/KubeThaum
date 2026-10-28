@@ -1,9 +1,25 @@
 # Working on KubeThaum
 
-// TODO: change when Thaumaturge 1.21.1 uploads to curseforge
-This branch targets Minecraft 1.21.1. Until Thaumaturge 1.21.1 gets uploaded to curseforge you have to copy its jar into `libs/`
-first (`libs/thaumaturge-1.21.1-NeoForge-<version>.jar`), or pass
-`-PlocalModsDir=<instance>/mods` to build against an existing installation.  
+This branch targets Minecraft 1.21.1. Thaumaturge is built from source until
+its matching version is available on CurseForge. The tested upstream commit
+is pinned as `thaumaturge_source_revision` in `gradle.properties`.
+
+Clone [Thaumaturge](https://github.com/Leclowndu93150/Thaumaturge), check out
+that commit, and build its mod JAR with Java 25 (its build tools require it;
+the mod itself targets Java 21):
+
+```sh
+git clone --branch 1.21.1 https://github.com/Leclowndu93150/Thaumaturge.git .tools/thaumaturge-1.21.1
+git -C .tools/thaumaturge-1.21.1 checkout 90fe443c83cc0ce868ec7e57dc944c99694ce533
+cd .tools/thaumaturge-1.21.1
+./gradlew --no-daemon jar
+```
+
+Return to KubeThaum and copy the resulting playable JAR from Thaumaturge's `build/libs/` into
+`libs/`, excluding sources and Javadoc JARs. Keep exactly one Thaumaturge JAR
+there. Alternatively, pass `-PlocalModsDir=<instance>/mods` to build against
+an existing installation containing Thaumaturge, KubeJS, Rhino, and their
+runtime dependencies. On Windows use `gradlew.bat` for these commands.
 
 Use the checked-in Gradle wrapper with Java 21:
 
@@ -12,17 +28,20 @@ Use the checked-in Gradle wrapper with Java 21:
 ```
 
 This runs the Java checks and GameTests and stages the mod JAR, sources JAR,
-and the ZIP with examples, guides, and release history in `build/release/`.
+and `KubeThaum-1.21.1-<version>.zip` with examples, guides, and release history
+in `build/release/`. Dependencies are never bundled in these artifacts.
 Dependency versions are maintained in `gradle.properties`.
 
 ## Release automation
 
-GitHub Actions builds and tests against both NeoForge versions in its matrix.
-Pull requests and other branches run checks. A successful build on the default
-branch, or a matching `v<version>` tag, can publish a release.
+GitHub Actions builds the pinned Thaumaturge source before building and testing
+KubeThaum against the NeoForge versions in its matrix. Pull requests and other
+branches run checks. A successful build on `1.21.1`, the default branch, or a
+matching `v<version>-mc1.21.1` tag can publish a release.
 
 - Keep `mod_version` unchanged to replace that version's release and move its
-  tag to the tested commit. Releases for other versions are preserved.
+  tag to the tested commit. Releases for other mod or Minecraft versions,
+  including the existing `v<version>` tags, are preserved.
 - To publish a new version, change `mod_version`, add `changelogs/<version>.md`,
   and add it to [the release history](changelogs/README.md). The new stable version
   becomes the latest release; publishing an older tag does not displace a newer version.
