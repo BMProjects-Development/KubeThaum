@@ -12,10 +12,14 @@ the mod itself targets Java 21):
 git clone --branch 1.21.1 https://github.com/Leclowndu93150/Thaumaturge.git .tools/thaumaturge-1.21.1
 git -C .tools/thaumaturge-1.21.1 checkout 90fe443c83cc0ce868ec7e57dc944c99694ce533
 cd .tools/thaumaturge-1.21.1
+./gradlew --no-daemon runData
 ./gradlew --no-daemon jar
 ```
 
-Return to KubeThaum and copy the resulting playable JAR from Thaumaturge's `build/libs/` into
+Data generation is required: the source tree does not include all research
+categories and other generated resources. Run it before the separate JAR build.
+
+Return to KubeThaum and copy the playable JAR from Thaumaturge's `build/libs/` into
 `libs/`, excluding sources and Javadoc JARs. Keep exactly one Thaumaturge JAR
 there. Alternatively, pass `-PlocalModsDir=<instance>/mods` to build against
 an existing installation containing Thaumaturge, KubeJS, Rhino, and their

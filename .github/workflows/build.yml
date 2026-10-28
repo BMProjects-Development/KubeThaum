@@ -81,6 +81,7 @@ jobs:
       - name: Build Thaumaturge dependency
         run: |
           chmod +x .tools/thaumaturge-1.21.1/gradlew
+          .tools/thaumaturge-1.21.1/gradlew -p .tools/thaumaturge-1.21.1 --no-daemon runData --console=plain
           .tools/thaumaturge-1.21.1/gradlew -p .tools/thaumaturge-1.21.1 --no-daemon jar --console=plain
           mkdir -p libs
           find .tools/thaumaturge-1.21.1/build/libs -maxdepth 1 -name 'thaumaturge-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -exec cp {} libs/ \;
