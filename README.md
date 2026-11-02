@@ -25,9 +25,8 @@ modpack's progression, and add or rebalance magical recipes in JavaScript.
    scripts in `kubejs/server_scripts/`, and translations in `kubejs/client_scripts/`.
 3. Reopen the world to apply research. For recipe changes, run `/reload`.
 
-For Minecraft 26.1.2, KubeThaum supports KubeJS 8.0.6 and 8.0.7.
-KubeJS 8.0.7 requires NeoForge `26.1.2.110` or newer. If using NeoForge
-`26.1.2.109`, keep KubeJS 8.0.6.
+KubeJS updates are accepted without an upper version limit. Install a version
+that matches your Minecraft and NeoForge versions.
 
 KubeThaum adds the scripting tools; your scripts define what appears in the pack.
 

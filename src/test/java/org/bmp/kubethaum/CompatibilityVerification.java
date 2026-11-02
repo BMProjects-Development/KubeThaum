@@ -78,12 +78,12 @@ public final class CompatibilityVerification {
             var dependency = Pattern.compile("(?s)modId=\"kubejs\"\\s+type=\"required\"\\s+versionRange=\"([^\"]+)\"").matcher(metadata);
             check(dependency.find(), "Generated metadata declares required KubeJS dependency");
             var range = VersionRange.createFromVersionSpec(dependency.group(1));
-            for (String version : new String[]{"26.1.2-8.0.6", "26.1.2-8.0.7"}) {
+            for (String version : new String[]{"26.1.2-8.0.6", "26.1.2-8.0.7", "26.1.2-8.0.8", "26.1.2-8.1.0", "26.1.2-9.0.0"}) {
                 check(range.containsVersion(new DefaultArtifactVersion(version)), "Metadata accepts KubeJS " + version);
             }
-            for (String version : new String[]{"26.1.2-8.0.5", "26.1.2-8.0.8", "26.1.2-8.1.0"}) {
-                check(!range.containsVersion(new DefaultArtifactVersion(version)), "Metadata excludes untested KubeJS " + version);
-            }
+            check(!range.containsVersion(new DefaultArtifactVersion("26.1.2-8.0.5")), "Metadata excludes KubeJS below the minimum");
+            check(range.getRestrictions().stream().allMatch(restriction -> restriction.getUpperBound() == null),
+                "Metadata has no KubeJS upper version limit");
         }
     }
 

@@ -7,6 +7,7 @@ replace that version's release files; other versions stay available.
 
 | Version | Highlights |
 | --- | --- |
+| [1.2.2](1.2.2.md) | Open-ended KubeJS dependency range, updated build dependency, and a simpler CI workflow. |
 | [1.2.1](1.2.1.md) | KubeJS 8.0.7 compatibility, with continued support for 8.0.6 and expanded compatibility checks. |
 | [1.2](1.2.md) | Progress flags in research requirements, with names and icons in the book; built-in research with flags can be edited. |
 | [1.1.1](1.1.1.md) | Simplified and Traditional Chinese translations for script check messages. |
