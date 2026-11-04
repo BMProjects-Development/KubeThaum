@@ -51,6 +51,7 @@ public final class CompatibilityVerification {
             check(Arrays.equals(unknownBytes, bytes(unknown)), "Unknown hook remains byte-for-byte intact");
         }
         verifyMetadata();
+        verifyClientHooks();
         System.out.println("KubeThaum: " + checks + " compatibility checks passed");
     }
 
@@ -84,6 +85,54 @@ public final class CompatibilityVerification {
             check(!range.containsVersion(new DefaultArtifactVersion("26.1.2-8.0.5")), "Metadata excludes KubeJS below the minimum");
             check(range.getRestrictions().stream().allMatch(restriction -> restriction.getUpperBound() == null),
                 "Metadata has no KubeJS upper version limit");
+            var thaumaturge = Pattern.compile("(?s)modId=\"thaumaturge\"\\s+type=\"required\"\\s+versionRange=\"([^\"]+)\"").matcher(metadata);
+            check(thaumaturge.find(), "Generated metadata declares required Thaumaturge dependency");
+            var thaumaturgeRange = VersionRange.createFromVersionSpec(thaumaturge.group(1));
+            for (String version : new String[]{"1.1.0", "1.1.1"}) {
+                check(thaumaturgeRange.containsVersion(new DefaultArtifactVersion(version)), "Metadata accepts Thaumaturge " + version);
+            }
+            for (String version : new String[]{"1.0.2", "1.0.3", "1.2.0"}) {
+                check(!thaumaturgeRange.containsVersion(new DefaultArtifactVersion(version)), "Metadata excludes untested Thaumaturge API " + version);
+            }
+        }
+    }
+
+    /** Optional client hooks must still match the pinned release, even on headless CI. */
+    private static void verifyClientHooks() throws Exception {
+        verifyClientHook("RequirementRowRendererMixin", "client/screen/research/detail/requirement/RequirementRowRenderer",
+            "drawPrerequisiteIcon", "(Lnet/minecraft/client/gui/GuiGraphicsExtractor;"
+                + "Lcom/leclowndu93150/thaumaturge/client/screen/research/detail/DetailFrame;IILnet/minecraft/resources/Identifier;)V",
+            "Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;");
+        verifyClientHook("TTTooltipsMixin", "client/screen/TTTooltips", "prereqEntryName",
+            "(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/network/chat/Component;",
+            "Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;");
+    }
+
+    private static void verifyClientHook(String mixinName, String targetPath, String methodName, String descriptor, String callback) throws Exception {
+        String target = "com/leclowndu93150/thaumaturge/" + targetPath;
+        var upstream = readClass(target);
+        check(upstream.methods.stream().anyMatch(method -> method.name.equals(methodName) && method.desc.equals(descriptor)),
+            "Released Thaumaturge declares client hook " + methodName);
+        var mixin = readClass("org/bmp/kubethaum/mixin/client/" + mixinName);
+        var annotation = mixin.invisibleAnnotations.stream().filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;")).findFirst().orElseThrow();
+        check(value(annotation, "value") instanceof List<?> targets && targets.contains(Type.getObjectType(target)),
+            "Client mixin targets released renderer " + mixinName);
+        var handler = mixin.methods.stream().filter(method -> method.name.startsWith("kubethaum$")).findFirst().orElseThrow();
+        var inject = handler.visibleAnnotations.stream().filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/injection/Inject;")).findFirst().orElseThrow();
+        check(value(inject, "method") instanceof List<?> methods && methods.contains(methodName), "Client injection selects " + methodName);
+        check(handler.desc.equals(descriptor.substring(0, descriptor.indexOf(')')) + callback + ")V"),
+            "Client callback matches released signature " + methodName);
+        check((handler.access & Opcodes.ACC_STATIC) == (upstream.methods.stream()
+            .filter(method -> method.name.equals(methodName) && method.desc.equals(descriptor)).findFirst().orElseThrow().access & Opcodes.ACC_STATIC),
+            "Client callback matches released static modifier " + methodName);
+    }
+
+    private static ClassNode readClass(String name) throws Exception {
+        try (var input = CompatibilityVerification.class.getClassLoader().getResourceAsStream(name + ".class")) {
+            if (input == null) throw new AssertionError("Class missing from test classpath: " + name);
+            var node = new ClassNode();
+            new ClassReader(input).accept(node, 0);
+            return node;
         }
     }
 

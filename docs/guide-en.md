@@ -208,6 +208,11 @@ stage.requireResearch('thaumaturge:m_hellandback')
 | The `key` of a Thaumaturge scan entry, such as `thaumaturge:scanned/orblock3` | scans one of that entry's targets |
 | `thaumaturge:m_hellandback`, `m_endoftheworld` | enters the Nether or the End |
 | `thaumaturge:m_walker`, `m_runner`, `m_jumper`, `m_swimmer` | walks, sprints, jumps, or swims enough |
+| `thaumaturge:f_arrow`, `thaumaturge:f_fireball`, `thaumaturge:f_spit` | is hurt by an arrow, fireball, or llama spit |
+
+Projectile milestones are recorded only after reaching stage 1 (zero-based)
+of `thaumaturge:focus_projectile`, or completing it. Keep that prerequisite
+reachable when changing progression.
 
 Only these patterns are accepted: an item, mob, effect, enchantment, or
 aspect that does not exist is still an `unknown ID` error, so typos are caught.

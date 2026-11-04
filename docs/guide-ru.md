@@ -208,6 +208,11 @@ stage.requireResearch('thaumaturge:m_hellandback')
 | `key` записи сканирования Thaumaturge, например `thaumaturge:scanned/orblock3` | сканирует одну из её целей |
 | `thaumaturge:m_hellandback`, `m_endoftheworld` | попадает в Нижний мир или Край |
 | `thaumaturge:m_walker`, `m_runner`, `m_jumper`, `m_swimmer` | достаточно ходит, бегает, прыгает или плавает |
+| `thaumaturge:f_arrow`, `thaumaturge:f_fireball`, `thaumaturge:f_spit` | получает урон от стрелы, огненного шара или плевка ламы |
+
+Флаги попаданий снарядами записываются только после достижения этапа 1
+(считая с нуля) исследования `thaumaturge:focus_projectile` или его завершения.
+При изменении прогрессии оставьте это условие достижимым.
 
 Принимаются только эти шаблоны: несуществующий предмет, существо, эффект, чары
 или аспект — по-прежнему ошибка `unknown ID`, поэтому опечатки находятся.

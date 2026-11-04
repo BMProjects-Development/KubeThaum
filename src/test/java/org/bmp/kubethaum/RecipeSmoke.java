@@ -5,7 +5,10 @@ import com.leclowndu93150.thaumaturge.content.infernalfurnace.InfernalBonus;
 import com.leclowndu93150.thaumaturge.content.recipe.crucible.CrucibleRecipe;
 import com.leclowndu93150.thaumaturge.content.recipe.workbench.ArcaneCraftingRecipe;
 import com.leclowndu93150.thaumaturge.content.infusion.InfusionRecipe;
+import com.leclowndu93150.thaumaturge.content.infusion.InfusionInput;
+import com.leclowndu93150.thaumaturge.content.infusion.InfusionRunicAugmentRecipe;
 import com.mojang.serialization.JsonOps;
+import java.util.List;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -18,7 +21,7 @@ import net.minecraft.world.item.crafting.Recipe;
 final class RecipeSmoke {
     static void verify(MinecraftServer server) {
         var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
-        for (var id : new String[]{"gold_in_crucible", "gold_at_arcane_workbench", "gold_from_redstone", "diamond_infusion", "swift_boots", "gilded_iron", "gilded_logs", "infernal_furnace"}) {
+        for (var id : new String[]{"gold_in_crucible", "gold_at_arcane_workbench", "gold_from_redstone", "diamond_infusion", "swift_boots", "runic_shielding", "gilded_iron", "gilded_logs", "infernal_furnace"}) {
             var recipe = get(server, "kubejs:" + id);
             var json = Recipe.CODEC.encodeStart(ops, recipe).getOrThrow();
             Recipe.CODEC.parse(ops, json).getOrThrow();
@@ -58,7 +61,27 @@ final class RecipeSmoke {
         var appended = Items.RAW_COPPER.builtInRegistryHolder().getData(InfernalBonus.DATA_MAP);
         require(appended != null && appended.stream().anyMatch(bonus -> bonus.items().contains(Items.IRON_NUGGET.builtInRegistryHolder()) && bonus.chance() == 0.25f)
             && appended.stream().anyMatch(bonus -> bonus.chance() == 0.33f), "tag bonus merges with native furnace data");
-        System.out.println("KubeThaum: 1.1 recipes and furnace data verified");
+        var runic = (InfusionRunicAugmentRecipe) get(server, "kubejs:runic_shielding");
+        require(runic.researchGate().orElseThrow().entry().toString().equals("thaumaturge:runic_shielding"), "runic augmentation research gate");
+        var chestplate = new ItemStack(Items.IRON_CHESTPLATE);
+        var first = new InfusionInput(chestplate, List.of(new ItemStack(Items.DIAMOND)));
+        require(runic.matches(first, server.overworld()), "native runic augmentation matches uncharged armor");
+        var charged = runic.assemble(first);
+        require(InfusionRunicAugmentRecipe.charge(charged) == 1 && InfusionRunicAugmentRecipe.charge(chestplate) == 0,
+            "native runic augmentation preserves input and adds charge");
+        var amber = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(Identifier.parse("thaumaturge:amber"));
+        require(!runic.matches(new InfusionInput(charged, first.components()), server.overworld())
+            && runic.matches(new InfusionInput(charged, List.of(new ItemStack(Items.DIAMOND), new ItemStack(amber))), server.overworld()),
+            "native runic per-level ingredient scaling");
+        require(runic.scaledAspects(charged).entries().getFirst().amount() == 12, "native runic essentia cost scaling");
+        var runicEdit = (InfusionRunicAugmentRecipe) get(server, "kubethaum:runic_edit");
+        require(runicEdit.matches(new InfusionInput(charged, List.of(new ItemStack(Items.LAPIS_LAZULI), new ItemStack(Items.REDSTONE))), server.overworld())
+            && !runicEdit.matches(new InfusionInput(charged, List.of(new ItemStack(Items.DIAMOND), new ItemStack(amber))), server.overworld()),
+            "runic base and per-level ingredient edits affect native matching");
+        require(runicEdit.scaledAspects(chestplate).entries().getFirst().amount() == 6
+            && runicEdit.researchGate().orElseThrow().entry().toString().equals("kubejs:basic_metallurgy"), "runic aspect and research edits");
+        Recipe.CODEC.parse(ops, Recipe.CODEC.encodeStart(ops, runicEdit).getOrThrow()).getOrThrow();
+        System.out.println("KubeThaum: recipes and furnace data verified against Thaumaturge 1.1");
     }
     private static Recipe<?> get(MinecraftServer server, String id) {
         return server.getRecipeManager().byKey(ResourceKey.create(Registries.RECIPE, Identifier.parse(id))).orElseThrow().value();

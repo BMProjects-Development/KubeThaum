@@ -38,6 +38,8 @@ public final class ThaumaturgeRecipes {
             .constructor(output, input, ingredients, cost).factory(FACTORY));
         register(registry, "infusion_enchantment", ENCHANTMENT.otherKey("enchantment"),
             IngredientComponent.INGREDIENT.inputKey("display_catalyst"), components(), aspects(), research());
+        register(registry, "runic_augment", IngredientComponent.INGREDIENT.inputKey("display_catalyst"),
+            components(), IngredientComponent.INGREDIENT.inputKey("per_level"), aspects(), research());
         register(registry, "arcane_workbench_shaped", result(), StringComponent.STRING.asList().otherKey("pattern"),
             IngredientComponent.INGREDIENT.asMap(StringComponent.STRING).inputKey("key"), vis(), crystals(), research());
         register(registry, "arcane_workbench_shapeless", result(), IngredientComponent.INGREDIENT.asList().inputKey("ingredients"),

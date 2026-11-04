@@ -12,7 +12,7 @@ import org.bmp.kubethaum.recipe.InfernalBonuses;
 
 public final class ThaumaturgeBinding {
     private static final Set<String> GATED_RECIPES = Set.of("thaumaturge:arcane_workbench_shaped", "thaumaturge:arcane_workbench_shapeless",
-        "thaumaturge:crucible", "thaumaturge:infusion", "thaumaturge:infusion_enchantment",
+        "thaumaturge:crucible", "thaumaturge:infusion", "thaumaturge:infusion_enchantment", "thaumaturge:runic_augment",
         "thaumaturge:dust_trigger_simple", "thaumaturge:dust_trigger_tag", "thaumaturge:dust_trigger_multiblock");
     private ThaumaturgeBinding() {}
 

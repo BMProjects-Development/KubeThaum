@@ -69,6 +69,11 @@ public final class ResearchVerification {
         var eventFlag = new ResearchEventJS(Map.of("pack:base", initial), categories);
         eventFlag.create("pack:end").stage(page -> page.text("End").requireResearch("thaumaturge:m_endoftheworld"));
         check(eventFlag.finish().entries().containsKey("pack:end"), "flags granted by Thaumaturge events are accepted");
+        for (String flag : new String[]{"thaumaturge:f_arrow", "thaumaturge:f_fireball", "thaumaturge:f_spit"}) {
+            var projectile = new ResearchEventJS(Map.of(), categories);
+            projectile.create("pack:projectile").parent(flag).stage(page -> page.text("Projectile").requireResearch(flag));
+            check(projectile.finish().entries().containsKey("pack:projectile"), "projectile milestone accepted: " + flag);
+        }
         var runtime = new ProgressFlags(Set.of("pack:f_custom"), Map.of("item", "minecraft:stone"::equals));
         var scanned = new ResearchEventJS(Map.of("pack:base", initial), categories, runtime);
         scanned.create("pack:scanned").parent("pack:f_custom")

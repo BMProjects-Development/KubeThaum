@@ -15,6 +15,11 @@ ServerEvents.recipes(event => {
   event.forEachRecipe({ id: 'kubethaum:infusion_patch' }, recipe => recipe.scaleAspects(2))
   event.replaceInput({ id: 'kubethaum:shaped_edit' }, 'minecraft:iron_ingot', 'minecraft:copper_ingot')
   event.forEachRecipe({ id: 'kubethaum:shaped_edit' }, recipe => recipe.scaleAspects(2).vis(30))
+  event.forEachRecipe({ id: 'kubethaum:runic_edit' }, recipe => {
+    recipe.scaleAspects(1.5).perLevel('minecraft:emerald').research('kubejs:basic_metallurgy')
+  })
+  event.replaceInput({ id: 'kubethaum:runic_edit' }, 'minecraft:diamond', 'minecraft:lapis_lazuli')
+  event.replaceInput({ id: 'kubethaum:runic_edit' }, 'minecraft:emerald', 'minecraft:redstone')
   let rejected = 0
   try { changed.scaleAspects(0) } catch (error) { rejected++ }
   try { changed.aspect('thaumaturge:ordo', -1) } catch (error) { rejected++ }
@@ -44,6 +49,11 @@ ServerEvents.generateData('after_mods', event => {
   event.json('kubethaum:recipe/shaped_edit.json', {
     type: 'thaumaturge:arcane_workbench_shaped', pattern: ['II', 'II'], key: { I: 'minecraft:iron_ingot' },
     vis: 20, crystals: [{ aspect: 'thaumaturge:ignis', amount: 2 }], result: { id: 'minecraft:gold_ingot' }
+  })
+  event.json('kubethaum:recipe/runic_edit.json', {
+    type: 'thaumaturge:runic_augment', display_catalyst: 'minecraft:iron_chestplate',
+    components: ['minecraft:diamond'], per_level: 'thaumaturge:amber',
+    aspects: [{ aspect: 'thaumaturge:praemunio', amount: 4 }]
   })
   // Independent fixed outputs for native data-map assertions.
   Thaumaturge.replaceInfernalBonus(event, 'minecraft:cobblestone', 'minecraft:gold_nugget', 3, 0.75)

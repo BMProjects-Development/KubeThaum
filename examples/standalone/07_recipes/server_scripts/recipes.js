@@ -44,6 +44,16 @@ ServerEvents.recipes(event => {
     { 'thaumaturge:aer': 8 }
   ).id('kubejs:swift_boots')
 
+  // Runic shielding: an extra amber is needed for each existing charge.
+  event.recipes.thaumaturge.runic_augment(
+    'minecraft:iron_chestplate',
+    ['minecraft:diamond'],
+    'thaumaturge:amber',
+    { 'thaumaturge:praemunio': 8 }
+  )
+    .id('kubejs:runic_shielding')
+    .research('thaumaturge:runic_shielding')
+
   // Salis Mundus turns a placed iron block into a gold block.
   event.recipes.thaumaturge.dust_trigger_simple(
     'minecraft:gold_block',
