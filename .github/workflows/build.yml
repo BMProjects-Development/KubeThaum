@@ -76,7 +76,7 @@ jobs:
           if-no-files-found: ignore
 
   release:
-    name: Publish GitHub release
+    name: Publish to GitHub and CurseForge
     needs: build
     if: >-
       github.event_name != 'pull_request' &&
@@ -108,7 +108,15 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Publish or replace this version
+      - name: Publish or replace the GitHub release
+        id: github_release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python .github/scripts/release.py publish
+
+      - name: Upload the tested mod JAR to CurseForge
+        if: steps.github_release.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: python .github/scripts/release.py publish-curseforge

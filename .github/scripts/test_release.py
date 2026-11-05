@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 
+from curseforge import uploads_in, with_uploads
 from release import GitHub, main, metadata, publish
 from unittest.mock import patch
 from urllib.error import HTTPError
@@ -36,9 +37,9 @@ class FakeGitHub:
                 return self.releases.get(self.latest)
             if route.startswith("/git/ref/tags/"):
                 return self.tags.get(route.removeprefix("/git/ref/tags/"))
-        if method == "DELETE" and route.startswith("/releases/"):
-            tag = next(tag for tag, release in self.releases.items() if str(release["id"]) == route.split("/")[-1])
-            del self.releases[tag]
+        if method == "DELETE" and route.startswith("/releases/assets/"):
+            asset_id = int(route.split("/")[-1])
+            self.draft["assets"] = [asset for asset in self.draft["assets"] if asset["id"] != asset_id]
             return None
         if method == "PATCH" and route.startswith("/git/refs/tags/"):
             self.tags[route.removeprefix("/git/refs/tags/")] = data["sha"]
@@ -49,16 +50,25 @@ class FakeGitHub:
         if method == "POST" and route == "/releases":
             release = {**data, "id": 99, "upload_url": "https://uploads.test/assets{?name,label}", "html_url": "https://github.test/release"}
             self.releases[data["tag_name"]] = release
+            self.draft = release
+            release["assets"] = []
             return release
         if method == "POST" and endpoint.startswith("https://uploads.test/"):
             if self.fail_upload:
                 raise RuntimeError("Upload failed")
             self.uploads.append((endpoint, data))
+            self.draft["assets"].append({"id": 1000 + len(self.uploads)})
             return {}
-        if method == "PATCH" and route == "/releases/99":
-            release = next(release for release in self.releases.values() if release["id"] == 99)
+        if method == "PATCH" and route.startswith("/releases/"):
+            release_id = int(route.split("/")[-1])
+            release = next(release for release in self.releases.values() if release["id"] == release_id)
             release.update(data)
-            if data["make_latest"] == "true":
+            if data.get("draft"):
+                self.draft = release
+                release.setdefault("assets", [])
+                release.setdefault("upload_url", "https://uploads.test/assets{?name,label}")
+                release.setdefault("html_url", "https://github.test/release")
+            if data.get("make_latest") == "true":
                 self.latest = release["tag_name"]
             return release
         raise AssertionError(f"Unexpected API call: {method} {endpoint}")
@@ -88,13 +98,18 @@ class ReleaseTests(unittest.TestCase):
 
     def test_same_version_is_replaced_and_retagged(self):
         older = {"id": 1, "tag_name": "v1.0"}
-        api = FakeGitHub({"v1.0": older, "v1.1-mc1.21.1": {"id": 2, "tag_name": "v1.1-mc1.21.1"}}, "v1.1-mc1.21.1", tags={"v1.0": "original", "v1.1-mc1.21.1": "old"})
+        receipt = {"a" * 64: 12345}
+        existing = {"id": 2, "tag_name": "v1.1-mc1.21.1", "body": with_uploads("Old notes", receipt), "assets": [{"id": 7}]}
+        api = FakeGitHub({"v1.0": older, "v1.1-mc1.21.1": existing}, "v1.1-mc1.21.1", tags={"v1.0": "original", "v1.1-mc1.21.1": "old"})
         self.publish(api)
-        self.assertIn(("DELETE", "/repos/owner/repo/releases/2", None), api.calls)
+        self.assertIn(("DELETE", "/repos/owner/repo/releases/assets/7", None), api.calls)
         self.assertEqual(api.releases["v1.0"], older)
         self.assertEqual(api.tags, {"v1.0": "original", "v1.1-mc1.21.1": "tested"})
         self.assertEqual(api.latest, "v1.1-mc1.21.1")
         self.assertIn("Clearer guides.", api.releases["v1.1-mc1.21.1"]["body"])
+        self.assertEqual(uploads_in(api.releases["v1.1-mc1.21.1"]["body"]), receipt)
+        self.assertEqual(api.releases["v1.1-mc1.21.1"]["id"], 2)
+        self.assertEqual(len(api.releases["v1.1-mc1.21.1"]["assets"]), 3)
         self.assertEqual(len(api.uploads), 3)
         self.assertEqual(api.calls[-1][2], {"draft": False, "make_latest": "true"})
 
@@ -130,7 +145,7 @@ class ReleaseTests(unittest.TestCase):
                     self.publish(api, ref=ref)
                 self.assertTrue(all(method == "GET" for method, _, _ in api.calls))
 
-    def test_missing_artifact_is_detected_before_deleting_release(self):
+    def test_missing_artifact_is_detected_before_changing_release(self):
         stem, notes = self.inputs()
         (self.root / f"{stem}.jar").unlink()
         api = FakeGitHub({"v1.1-mc1.21.1": {"id": 2, "tag_name": "v1.1-mc1.21.1"}})
@@ -155,7 +170,7 @@ class ReleaseTests(unittest.TestCase):
         releases["v1.1-mc1.21.1"] = {"id": 2, "tag_name": "v1.1-mc1.21.1"}
         api = FakeGitHub(releases, "v2.99")
         self.publish(api)
-        self.assertIn(("DELETE", "/repos/owner/repo/releases/2", None), api.calls)
+        self.assertTrue(any(method == "PATCH" and route.endswith("/releases/2") for method, route, _ in api.calls))
         self.assertEqual(len(api.releases), 101)
         self.assertEqual(api.latest, "v2.99")
 
