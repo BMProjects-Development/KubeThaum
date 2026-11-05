@@ -50,15 +50,7 @@ dependencies {
         // Official release files, pinned by Modrinth version IDs.
         implementation("maven.modrinth:kubejs:${kubejs_modrinth_version}") { transitive = false }
         implementation("maven.modrinth:rhino:${rhino_modrinth_version}") { transitive = false }
-        // Built from the pinned upstream revision; never included in our release.
-        def thaumaturgeJars = fileTree('libs') {
-            include 'thaumaturge-*.jar'
-            exclude '*-sources.jar', '*-javadoc.jar'
-        }
-        if (thaumaturgeJars.files.size() != 1) {
-            throw new GradleException('Put exactly one built Thaumaturge 1.21.1 mod JAR in libs/; see CONTRIBUTING.md')
-        }
-        implementation thaumaturgeJars
+        implementation "curse.maven:thaumaturge-1628024:${thaumaturge_file_id}"
         runtimeOnly 'curse.maven:curios-309927:6529130'
         runtimeOnly 'curse.maven:lithostitched-936015:9170709'
         runtimeOnly 'curse.maven:better-advanced-tooltips-1637623:8576077'
@@ -67,7 +59,8 @@ dependencies {
 
 def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     def propertiesToExpand = [minecraft_version_range: minecraft_version_range,
-        neo_version_range: neo_version_range, mod_id: mod_id, mod_name: mod_name,
+        neo_version_range: neo_version_range, thaumaturge_version_range: thaumaturge_version_range,
+        mod_id: mod_id, mod_name: mod_name,
         mod_license: mod_license, mod_version: mod_version, mod_authors: mod_authors,
         mod_description: mod_description]
     inputs.properties propertiesToExpand

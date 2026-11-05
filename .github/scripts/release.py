@@ -115,8 +115,9 @@ def publish(api, repository, sha, ref, version, stem, artifact_dir, notes, minec
     if existing and existing.get("immutable"):
         raise ValueError(f"Release {tag} is immutable; GitHub does not allow replacing it")
     prerelease = "-" in version
+    # Keep the default Minecraft release as Latest when the mod versions tie.
     make_latest = not prerelease and (
-        latest is None or version_key(tag) >= version_key(latest["tag_name"])
+        latest is None or latest["tag_name"] == tag or version_key(tag) > version_key(latest["tag_name"])
     )
 
     # Only this version is replaced. Other releases and tags are preserved.

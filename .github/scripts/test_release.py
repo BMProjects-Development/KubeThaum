@@ -188,6 +188,15 @@ class ReleaseTests(unittest.TestCase):
                     self.publish(api, ref=ref)
                 self.assertTrue(all(method == "GET" for method, _, _ in api.calls))
 
+    def test_minecraft_release_with_same_mod_version_keeps_main_latest(self):
+        latest = {"id": 2, "tag_name": "v1.3"}
+        api = FakeGitHub({"v1.3": latest}, "v1.3", tags={"v1.3": "main-commit"})
+        self.publish(api, version="1.3", ref="refs/heads/1.21.1")
+        self.assertEqual(api.releases["v1.3"], latest)
+        self.assertEqual(api.tags["v1.3"], "main-commit")
+        self.assertIn("v1.3-mc1.21.1", api.releases)
+        self.assertEqual(api.latest, "v1.3")
+
     def test_missing_notes_or_invalid_version_fails_validation(self):
         self.inputs()
         (self.root / "changelogs/1.1.md").unlink()

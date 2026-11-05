@@ -19,6 +19,7 @@ public final class ProgressFlags {
      */
     private static final Set<String> EVENT_FLAGS = Set.of(
         "thaumaturge:gotcrystals", "thaumaturge:gotdream", "thaumaturge:gotthaumonomicon", "thaumaturge:f_onfire",
+        "thaumaturge:f_arrow", "thaumaturge:f_fireball", "thaumaturge:f_spit",
         "thaumaturge:m_deepdown", "thaumaturge:m_uphigh", "thaumaturge:m_hellandback", "thaumaturge:m_endoftheworld",
         "thaumaturge:m_walker", "thaumaturge:m_runner", "thaumaturge:m_jumper", "thaumaturge:m_swimmer");
     /** Only the event flags; for tests and callers without loaded data. */

@@ -16,13 +16,9 @@ concurrency:
 
 jobs:
   build:
-    name: NeoForge ${{ matrix.neoforge }}
+    name: Build and test
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        neoforge: ["21.1.264"]
+    timeout-minutes: 35
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -49,12 +45,6 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Set up Java 25 for the Thaumaturge build tools
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-
       - name: Set up Gradle and validate wrapper
         uses: gradle/actions/setup-gradle@v6
         with:
@@ -63,36 +53,10 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Read pinned Thaumaturge revision
-        id: thaumaturge
-        run: |
-          revision=$(sed -n 's/^thaumaturge_source_revision=//p' gradle.properties)
-          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
-          echo "revision=$revision" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout Thaumaturge source
-        uses: actions/checkout@v7
-        with:
-          repository: Leclowndu93150/Thaumaturge
-          ref: ${{ steps.thaumaturge.outputs.revision }}
-          path: .tools/thaumaturge-1.21.1
-          persist-credentials: false
-
-      - name: Build Thaumaturge dependency
-        run: |
-          chmod +x .tools/thaumaturge-1.21.1/gradlew
-          .tools/thaumaturge-1.21.1/gradlew -p .tools/thaumaturge-1.21.1 --no-daemon runData --console=plain
-          .tools/thaumaturge-1.21.1/gradlew -p .tools/thaumaturge-1.21.1 --no-daemon jar --console=plain
-          mkdir -p libs
-          find .tools/thaumaturge-1.21.1/build/libs -maxdepth 1 -name 'thaumaturge-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -exec cp {} libs/ \;
-
       - name: Build, package and run GameTests
-        env:
-          NEOFORGE_VERSION: ${{ matrix.neoforge }}
-        run: ./gradlew --no-daemon build releaseArtifacts runGameTestServer "-Pneo_version=$NEOFORGE_VERSION" --console=plain
+        run: ./gradlew --no-daemon build releaseArtifacts runGameTestServer --console=plain
 
       - name: Upload release artifacts
-        if: matrix.neoforge == '21.1.264'
         uses: actions/upload-artifact@v7
         with:
           name: kubethaum-${{ steps.version.outputs.version }}
@@ -103,7 +67,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: logs-neoforge-${{ matrix.neoforge }}
+          name: diagnostic-logs
           path: |
             run-gametest/logs/
             run-gametest/kubejs/logs/

@@ -8,7 +8,7 @@ Pick the ones you need and put them in `kubejs/server_scripts/thaumaturge_recipe
 You can have several `ServerEvents.recipes` handlers in one file.
 
 Save the file and run `/reload`. If you also added research, reopen the world:
-research updates when the world loads. A complete file with all eight recipe
+research updates when the world loads. A complete file with all nine recipe
 types is available in [07_recipes](../examples/standalone/07_recipes/server_scripts/recipes.js).
 
 <details>
@@ -17,6 +17,7 @@ types is available in [07_recipes](../examples/standalone/07_recipes/server_scri
 - [Gold from iron in the crucible](#gold-from-iron-in-the-crucible)
 - [Gold at the arcane workbench](#gold-at-the-arcane-workbench)
 - [A diamond through infusion](#a-diamond-through-infusion)
+- [Runic shielding](#runic-shielding)
 - [Transforming blocks with Salis Mundus](#transforming-blocks-with-salis-mundus)
 - [Changing an existing recipe](#changing-an-existing-recipe)
 - [Infernal furnace bonuses](#infernal-furnace-bonuses)
@@ -129,6 +130,35 @@ ServerEvents.recipes(event => {
 The iron boots are the item shown in the recipe. Thaumaturge's enchantment
 determines which items can actually receive it.
 Use `'swift'`, rather than a Minecraft enchantment ID.
+
+## Runic shielding
+
+Configure the base ingredients, the ingredient added for each existing charge,
+and the base essentia cost:
+
+```js
+ServerEvents.recipes(event => {
+  event.recipes.thaumaturge.runic_augment(
+    'minecraft:iron_chestplate',
+    ['minecraft:diamond'],
+    'thaumaturge:amber',
+    { 'thaumaturge:praemunio': 8 }
+  )
+    .id('kubejs:runic_shielding')
+    .research('thaumaturge:runic_shielding')
+})
+```
+
+The first argument is the display catalyst. Thaumaturge determines which items
+can receive shielding; this does not restrict the recipe to iron chestplates.
+At zero charge the example needs one diamond; at one charge it also needs one
+amber. Thaumaturge scales essentia and instability and adds one charge to the
+central item. There is no fixed output argument.
+
+Use `.perLevel('minecraft:emerald')` to change the extra ingredient and
+`.components(...)`, `.aspect(...)`, `.scaleAspects(...)` or `.research(...)`
+to rebalance the recipe. To replace the default recipe, remove
+`thaumaturge:runic_augment/runic_shielding` in the same recipe event.
 
 ## Transforming blocks with Salis Mundus
 
