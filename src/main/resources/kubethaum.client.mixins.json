@@ -4,6 +4,7 @@
   "package": "org.bmp.kubethaum.mixin.client",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "CategoryIconMixin",
     "RequirementRowRendererMixin",
     "TTTooltipsMixin"
   ],

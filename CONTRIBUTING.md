@@ -12,6 +12,10 @@ Dependency versions are maintained in `gradle.properties`.
 
 ## Release automation
 
+Write release notes for players and modpack creators. Describe what they can
+do now or what works better in the game. Use plain language and leave build,
+testing, and implementation details in the development history.
+
 GitHub Actions builds and runs checks once, using the pinned NeoForge and KubeJS
 dependencies from `gradle.properties`. There is no dependency version matrix.
 The KubeJS dependency range has a minimum version and no upper bound, so future

@@ -11,19 +11,9 @@ Save the file and run `/reload`. If you also added research, reopen the world:
 research updates when the world loads. A complete file with all nine recipe
 types is available in [07_recipes](../examples/standalone/07_recipes/server_scripts/recipes.js).
 
-<details>
-<summary>Contents</summary>
-
-- [Gold from iron in the crucible](#gold-from-iron-in-the-crucible)
-- [Gold at the arcane workbench](#gold-at-the-arcane-workbench)
-- [A diamond through infusion](#a-diamond-through-infusion)
-- [Runic shielding](#runic-shielding)
-- [Transforming blocks with Salis Mundus](#transforming-blocks-with-salis-mundus)
-- [Changing an existing recipe](#changing-an-existing-recipe)
-- [Infernal furnace bonuses](#infernal-furnace-bonuses)
-- [Reference and checking](#reference-and-checking)
-
-</details>
+- **Add a recipe** · [Gold from iron in the crucible](#gold-from-iron-in-the-crucible) · [Gold at the arcane workbench](#gold-at-the-arcane-workbench) · [A diamond through infusion](#a-diamond-through-infusion) · [Runic shielding](#runic-shielding) · [Transforming blocks with Salis Mundus](#transforming-blocks-with-salis-mundus)
+- **Adjust an existing pack** · [Changing an existing recipe](#changing-an-existing-recipe) · [Infernal furnace bonuses](#infernal-furnace-bonuses)
+- **Find a method** · [Reference and checking](#reference-and-checking)
 
 ## Gold from iron in the crucible
 

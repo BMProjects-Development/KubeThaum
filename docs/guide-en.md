@@ -6,29 +6,15 @@ Suppose your pack lets players turn iron into gold in a crucible, after
 they have studied metals. We'll add the research, give it a few requirements,
 and unlock the recipe when the player finishes it.
 
-Start with one file, then add another entry, change built-in Metallurgy,
-or make a separate tab. For a complete version with translations, use
-[the Workshop example](#the-complete-workshop).
+Start with [one research entry](#your-first-research), jump straight to
+[tab icons](#change-a-tab-icon), or copy the
+[complete Workshop](#the-complete-workshop) for a working tab with translations
+and a recipe that unlocks through research.
 
-<details>
-<summary>Contents</summary>
-
-- [Where scripts go](#where-scripts-go)
-- [Your first research](#your-first-research)
-- [Stage requirements and rewards](#stage-requirements-and-rewards)
-- [Research chains](#research-chains)
-- [Your own tab](#your-own-tab)
-- [Names and translations](#names-and-translations)
-- [Unlocking a recipe through research](#unlocking-a-recipe-through-research)
-- [Editing existing research](#editing-existing-research)
-- [Copying and replacing research](#copying-and-replacing-research)
-- [Additional pages and appearance](#additional-pages-and-appearance)
-- [The complete Workshop](#the-complete-workshop)
-- [Quick reference](#quick-reference)
-- [Checking scripts with a command](#checking-scripts-with-a-command)
-- [When something does not appear](#when-something-does-not-appear)
-
-</details>
+- **Start here** · [Where scripts go](#where-scripts-go) · [Your first research](#your-first-research) · [Stage requirements and rewards](#stage-requirements-and-rewards) · [Research chains](#research-chains)
+- **Customize the book** · [Your own tab](#your-own-tab) · [Change a tab icon](#change-a-tab-icon) · [Names and translations](#names-and-translations) · [Editing existing research](#editing-existing-research) · [Copying and replacing research](#copying-and-replacing-research) · [Additional pages and appearance](#additional-pages-and-appearance)
+- **Connect recipes and progression** · [Unlocking a recipe through research](#unlocking-a-recipe-through-research) · [The complete Workshop](#the-complete-workshop) · [Ideas for your pack](#ideas-for-your-pack)
+- **Find a method or fix a problem** · [Quick reference](#quick-reference) · [Checking scripts with a command](#checking-scripts-with-a-command) · [When something does not appear](#when-something-does-not-appear)
 
 ## Where scripts go
 
@@ -307,6 +293,7 @@ This example is self-contained. Save it as
 ThaumaturgeEvents.research(event => {
   event.category('kubejs:alchemy_workshop')
     .style('thaumaturge:alchemy')
+    .itemIcon('minecraft:brewing_stand')
     .index(30)
     .formula('thaumaturge:ordo', 2)
     .formula('thaumaturge:ignis', 1)
@@ -347,13 +334,33 @@ the ID and replace the colon with a dot.
 To keep the tab locked until Metallurgy is complete, add
 `.requireResearch('thaumaturge:metallurgy')` to the category chain.
 The research that unlocks a tab must be accessible outside that tab.
-To change an existing tab:
+
+### Change a tab icon
+
+To change the **Alchemy tab itself**, put this in a script under
+`kubejs/server_scripts/`:
 
 ```js
 ThaumaturgeEvents.research(event => {
-  event.editCategory('thaumaturge:alchemy').index(5)
+  event.editCategory('thaumaturge:alchemy')
+    .itemIcon('minecraft:brewing_stand')
 })
 ```
+
+| Use | What to pass |
+| --- | --- |
+| `itemIcon(id)` | An item ID such as `minecraft:brewing_stand`. You can use items from other installed mods. |
+| `icon(texture)` | A PNG resource path such as `kubejs:textures/gui/alchemy.png`. |
+
+For the custom PNG, save a square transparent image (16×16 works well) at
+`kubejs/assets/kubejs/textures/gui/alchemy.png` in each player's pack and use
+`.icon('kubejs:textures/gui/alchemy.png')` in place of `.itemIcon(...)`.
+Press F3+T to reload the image after editing it. Reopen the world or restart the
+dedicated server after changing the script.
+
+Use the same methods on `event.category(...)` for a new tab. If you copy
+another tab's appearance with `style(...)`, set your icon after it.
+You can also change the position of an existing tab with `editCategory(id).index(5)`.
 
 ## Names and translations
 
@@ -584,7 +591,7 @@ Available Thaumaturge flags are `round`, `spiky`, `reverse`, `hidden`,
 Thaumaturge determines flag behavior; ordinary entries do not need flags.
 `icon` appends an icon; `clearIcons` lets you replace the original set.
 You can also use a path to an existing `.png` texture instead of an item ID.
-A **tab's** `icon` takes a texture path, rather than an item ID.
+For the icon in the tab bar, see [Change a tab icon](#change-a-tab-icon).
 
 A stage can display a construction diagram. For a column of two stone
 blocks, place this inside `.stage(stage => { ... })`:
@@ -606,7 +613,7 @@ This displays a diagram; it does not register a new multiblock or its recipe.
 
 [06_workshop](../examples/standalone/06_workshop) is a complete example with:
 
-1. A Workshop tab using Alchemy's appearance.
+1. A Workshop tab with Alchemy's background and its own item icon.
 2. Preparing the Workshop: handing in planks and a crafting table.
 3. Metal Transmutation: unlocked after preparation and requiring iron.
 4. An iron-to-gold crucible recipe, unlocked by completing the second research.
@@ -638,6 +645,37 @@ Other ready-to-use scripts:
 Move the desired `.js` files from nested `server_scripts` and `client_scripts`
 folders into KubeJS's matching folders. The `examples` folder itself is not executed.
 
+## Ideas for your pack
+
+### Unlock a whole chapter with an expedition
+
+In a starter tab, add a stage that asks the player to visit the Nether:
+
+```js
+stage.text('Travel to the Nether and return to open the expedition chapter.')
+stage.requireResearch('thaumaturge:m_hellandback')
+```
+
+If that starter entry is `kubejs:nether_expedition`, add
+`.requireResearch('kubejs:nether_expedition')` to the new chapter's category.
+The player completes the starter research first, then gets access to the chapter.
+You can use a [scan requirement](#require-something-the-player-does-or-scans) in
+the starter stage to make the expedition about a particular creature or item.
+
+### Teach a recipe before the research is complete
+
+Show an early tool with `stage.recipe('kubejs:field_scanner')` and use
+`.research('kubejs:fieldwork', 0)` on that recipe. Players can make the tool as
+soon as they start Fieldwork. Put an advanced recipe behind
+`.research('kubejs:fieldwork')` so it opens when the entry is complete.
+The [recipe guide](recipes-en.md#reference-and-checking) lists both forms.
+
+### Bring players back to old pages
+
+Put a [conditional addendum](#additional-pages-and-appearance) on an early entry.
+After players complete a later study, the old entry can reveal a shortcut,
+a new way to get a familiar item, or a bonus recipe.
+
 ## Quick reference
 
 | Task | Method |
@@ -656,7 +694,8 @@ folders into KubeJS's matching folders. The `examples` folder itself is not exec
 | Knowledge reward / knowledge requirement | `knowledge(type, category, amount)` / `requireKnowledge(type, category, amount)` |
 | Research notes and warp | `noteAspect(id, amount)`, `complexity(1..3)`, `stage.warp(amount)` |
 | Additional page | `addendum(callback)` |
-| Tab appearance and access | `style(id)`, `icon(texture)`, `background(texture)`, `overlay(texture)`, `noOverlay()`, `index(n)`, `requireResearch(id)`, `noRequiredResearch()` |
+| Tab appearance and access | `style(id)`, `itemIcon(id)`, `icon(texture)`, `background(texture)`, `overlay(texture)`, `noOverlay()` |
+| Tab order and access | `index(n)`, `requireResearch(id)`, `noRequiredResearch()` |
 | Tab formula | `formula(aspectId, amount)` |
 | Gate a recipe | `.research('kubejs:ironworking')` in the recipe chain |
 

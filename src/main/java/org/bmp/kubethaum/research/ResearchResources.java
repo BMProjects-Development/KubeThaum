@@ -55,6 +55,7 @@ public final class ResearchResources implements ResourceManager {
         ThaumaturgeEvents.RESEARCH.post(ScriptType.SERVER, event);
         var changes = event.finish();
         ResearchValidator.validateItems(changes.entries(), BuiltInRegistries.ITEM::containsKey);
+        ResearchValidator.validateCategoryIcons(changes.categories(), BuiltInRegistries.ITEM::containsKey);
         var overlay = new LinkedHashMap<Identifier, Resource>();
         var source = holder.kjs$getScriptManager().internalDataPack;
         add(overlay, changes.entries(), ENTRY_DIR, source);
