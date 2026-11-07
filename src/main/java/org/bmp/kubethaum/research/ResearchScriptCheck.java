@@ -107,6 +107,7 @@ public final class ResearchScriptCheck {
                     try {
                         changes = event.finish();
                         ResearchValidator.validateItems(changes.entries(), knownItem);
+                        ResearchValidator.validateCategoryIcons(changes.categories(), knownItem);
                     } catch (RuntimeException error) {
                         problems.add(problem(error, locate(error.getMessage(), locations)));
                     }

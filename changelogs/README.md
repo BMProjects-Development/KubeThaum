@@ -7,6 +7,7 @@ replace that version's release files; other versions stay available.
 
 | Version | Highlights |
 | --- | --- |
+| [1.3.1](1.3.1.md) | Item icons for Thaumonomicon tabs and easier-to-follow guides. |
 | [1.3](1.3.md) | Official Thaumaturge 1.1 support, runic augmentation recipes, and projectile progress flags. |
 | [1.2](1.2.md) | Progress flags in research requirements, with names and icons in the book; built-in research with flags can be edited. |
 | [1.1.1](1.1.1.md) | Simplified and Traditional Chinese translations for script check messages. |

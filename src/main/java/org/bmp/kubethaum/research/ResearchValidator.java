@@ -124,6 +124,15 @@ public final class ResearchValidator {
         });
     }
 
+    public static void validateCategoryIcons(Map<String, JsonObject> categories, Predicate<ResourceLocation> knownItem) {
+        categories.forEach((id, category) -> {
+            if (!category.has("icon")) return;
+            var icon = ResourceLocation.tryParse(category.get("icon").getAsString());
+            var itemId = icon == null ? null : CategoryIcon.itemId(icon);
+            if (itemId != null) item(itemId.toString(), "Category '" + id + "', field 'icon'", knownItem);
+        });
+    }
+
     private static void item(String item, String context, Predicate<ResourceLocation> knownItem) {
         if (item.startsWith("#")) return;
         ResearchDiagnostics.at(context, () -> {

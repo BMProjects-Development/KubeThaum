@@ -3,7 +3,7 @@
 Customize **Thaumaturge** with KubeJS: write your own research, shape your
 modpack's progression, and add or rebalance magical recipes in JavaScript.
 
-[Download for Minecraft 1.21.1](https://github.com/BMProjects-Development/KubeThaum/releases/tag/v1.3-mc1.21.1)
+[Download for Minecraft 1.21.1](https://github.com/BMProjects-Development/KubeThaum/releases/tag/v1.3.1-mc1.21.1)
 · [Examples](examples)
 · [What's changed](changelogs/README.md)
 · [Report an issue](https://github.com/BMProjects-Development/KubeThaum/issues)

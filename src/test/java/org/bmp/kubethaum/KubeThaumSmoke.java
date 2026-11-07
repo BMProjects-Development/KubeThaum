@@ -74,7 +74,17 @@ public final class KubeThaumSmoke {
         if (entries.get(ResourceLocation.parse("pack:runtime_flags")) == null) {
             helper.fail("Research requiring event, scan and ScanKeys progress flags is missing"); return;
         }
-        var category = registries.registryOrThrow(IResearchCategory.REGISTRY_KEY).get(ResourceLocation.parse("kubejs:metallurgy"));
+        var categories = registries.registryOrThrow(IResearchCategory.REGISTRY_KEY);
+        var alchemy = categories.get(ResourceLocation.parse("thaumaturge:alchemy"));
+        var copied = categories.get(ResourceLocation.parse("pack:copied_tab"));
+        var textured = categories.get(ResourceLocation.parse("pack:textured_tab"));
+        if (alchemy == null || copied == null || textured == null
+            || !alchemy.icon().equals(ResourceLocation.parse("kubethaum:category_item/minecraft/compass"))
+            || !copied.icon().equals(alchemy.icon())
+            || !textured.icon().equals(ResourceLocation.parse("minecraft:textures/item/book.png"))) {
+            helper.fail("Chapter item icon, style copy or texture override was lost"); return;
+        }
+        var category = categories.get(ResourceLocation.parse("kubejs:metallurgy"));
         if (category == null || category.formula().size() != 2 || !category.background().getPath().contains("back_3")) {
             helper.fail("Category style/formula incorrect"); return;
         }

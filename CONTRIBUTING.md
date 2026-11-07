@@ -17,6 +17,10 @@ Rhino, and their runtime dependencies installed there.
 
 ## Release automation
 
+Write release notes for players and modpack creators. Describe what they can
+do now or what works better in the game. Use plain language and leave build,
+testing, and implementation details in the development history.
+
 GitHub Actions builds and tests each Minecraft version with the dependencies
 pinned in its branch. A successful push to `1.21.1` publishes that branch's
 GitHub release. A matching `v<version>-mc1.21.1` tag can also publish it.

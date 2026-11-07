@@ -1,4 +1,9 @@
 ThaumaturgeEvents.research(event => {
+  event.editCategory('thaumaturge:alchemy').itemIcon('minecraft:compass')
+  event.category('pack:copied_tab').style('thaumaturge:alchemy')
+  event.category('pack:textured_tab').style('pack:copied_tab')
+    .icon('minecraft:textures/item/book.png')
+
   event.create('pack:copy_source')
     .category('thaumaturge:alchemy').title('Original').position(8, 8)
     .stage(stage => stage.text('Original stage').obtain('#minecraft:planks', 1))

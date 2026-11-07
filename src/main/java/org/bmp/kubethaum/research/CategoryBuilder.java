@@ -3,6 +3,7 @@ package org.bmp.kubethaum.research;
 import com.google.gson.JsonObject;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import java.util.function.Function;
+import net.minecraft.resources.ResourceLocation;
 
 public final class CategoryBuilder {
     private final JsonObject data;
@@ -27,6 +28,9 @@ public final class CategoryBuilder {
         }
     }
     public CategoryBuilder icon(String texture) { return field("icon", () -> data.addProperty("icon", ResearchJson.id(texture))); }
+    public CategoryBuilder itemIcon(String item) {
+        return field("icon", () -> data.addProperty("icon", CategoryIcon.forItem(ResourceLocation.parse(ResearchJson.id(item))).toString()));
+    }
     public CategoryBuilder background(String texture) { return field("background", () -> data.addProperty("background", ResearchJson.id(texture))); }
     public CategoryBuilder overlay(String texture) { return field("overlay_background", () -> data.addProperty("overlay_background", ResearchJson.id(texture))); }
     public CategoryBuilder noOverlay() { data.remove("overlay_background"); return this; }

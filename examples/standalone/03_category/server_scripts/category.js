@@ -2,6 +2,7 @@
 ThaumaturgeEvents.research(event => {
   event.category('kubejs:alchemy_workshop')
     .style('thaumaturge:alchemy')
+    .itemIcon('minecraft:brewing_stand')
     .index(30)
     .formula('thaumaturge:ordo', 2)
   event.create('kubejs:workshop_tools')
